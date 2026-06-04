@@ -1,0 +1,7 @@
+{
+  "install": "npm install",
+  "start": "npx tsx server/index.ts",
+  "watch": {
+    "ignore": ["dist", "data", "node_modules"]
+  }
+}
