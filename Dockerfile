@@ -20,10 +20,10 @@ RUN npm run build
 # Remove dev dependencies to save space
 RUN npm prune --omit=dev && npm install tsx better-sqlite3 bcryptjs express express-session cors
 
-# Expose port
-ENV PORT=3001
+# Hugging Face Spaces uses port 7860
+ENV PORT=7860
 ENV NODE_ENV=production
-EXPOSE 3001
+EXPOSE 7860
 
 # Start the server
 CMD ["npx", "tsx", "server/index.ts"]
