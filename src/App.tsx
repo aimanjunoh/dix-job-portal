@@ -8,6 +8,7 @@ import Users from './pages/Users';
 import Requests from './pages/Requests';
 import RequestDetail from './pages/RequestDetail';
 import Activities from './pages/Activities';
+import QuickAction from './pages/QuickAction';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -30,6 +31,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+      <Route path="/action" element={<QuickAction />} />
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="users" element={<Users />} />

@@ -1,5 +1,10 @@
 import { supabase } from '../lib/supabase';
 
+// Generate unique action token
+function generateToken(): string {
+  return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
 // Generate next request ID
 async function generateRequestId(): Promise<string> {
   const { data } = await supabase
@@ -21,6 +26,31 @@ async function logActivity(requestId: number | null, action: string, performedBy
     performed_by: performedBy,
     details,
   });
+}
+
+// Send email via Vercel serverless function
+async function sendEmail(to: string | string[], subject: string, type: string, data: any): Promise<boolean> {
+  try {
+    const res = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, type, data }),
+    });
+    return res.ok;
+  } catch {
+    console.warn('Email send failed — RESEND_API_KEY may not be configured');
+    return false;
+  }
+}
+
+// Get admin emails
+async function getAdminEmails(): Promise<string[]> {
+  const { data } = await supabase
+    .from('users')
+    .select('email')
+    .eq('role', 'admin')
+    .eq('status', 'active');
+  return (data || []).map(u => u.email);
 }
 
 export const api = {
@@ -78,8 +108,6 @@ export const api = {
     },
 
     create: async (userData: any) => {
-      // Create auth user via Supabase Admin (requires service role, or use invite)
-      // For simplicity, use the signup flow
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -153,7 +181,6 @@ export const api = {
       const { data, count, error } = await query.range(from, to);
       if (error) throw error;
 
-      // Flatten the data
       const requests = (data || []).map((r: any) => ({
         ...r,
         assigned_name: r.users?.name || null,
@@ -176,7 +203,6 @@ export const api = {
         new: requests.filter(r => r.status === 'New').length,
       };
 
-      // Recent requests
       const { data: recentRequests } = await supabase
         .from('requests')
         .select('*, users!assigned_to(name)')
@@ -189,7 +215,6 @@ export const api = {
         users: undefined,
       }));
 
-      // Unassigned requests
       const { data: unassignedRequests } = await supabase
         .from('requests')
         .select('*')
@@ -222,6 +247,8 @@ export const api = {
 
     create: async (requestData: any) => {
       const request_id = await generateRequestId();
+      const action_token = generateToken();
+
       const { data, error } = await supabase.from('requests').insert({
         request_id,
         title: requestData.title,
@@ -234,6 +261,7 @@ export const api = {
         assigned_to: requestData.assigned_to || null,
         status: requestData.status || 'New',
         remarks: requestData.remarks || '',
+        action_token,
       }).select().single();
       if (error) throw error;
 
@@ -243,6 +271,28 @@ export const api = {
       if (requestData.assigned_to) {
         const { data: assignee } = await supabase.from('users').select('name').eq('id', requestData.assigned_to).single();
         await logActivity(data.id, 'Request Assigned', user?.email || 'System', `Assigned to ${assignee?.name || 'Unknown'}`);
+      }
+
+      // Send email notification to admins
+      const adminEmails = await getAdminEmails();
+      if (adminEmails.length > 0) {
+        sendEmail(adminEmails, `New Request: ${request_id} — ${requestData.title}`, 'new_request', {
+          ...data,
+          token: action_token,
+          admin_emails: adminEmails,
+        });
+      }
+
+      // If assigned, send assignment email
+      if (requestData.assigned_to) {
+        const { data: assignee } = await supabase.from('users').select('name, email').eq('id', requestData.assigned_to).single();
+        if (assignee?.email) {
+          sendEmail(assignee.email, `You've been assigned: ${request_id}`, 'assignment', {
+            ...data,
+            assigned_name: assignee.name,
+            token: action_token,
+          });
+        }
       }
 
       return { request: data };
@@ -264,20 +314,47 @@ export const api = {
       if (requestData.assigned_to !== undefined) updateData.assigned_to = requestData.assigned_to || null;
       if (requestData.status !== undefined) updateData.status = requestData.status;
 
+      // Generate new token if not exists
+      if (!existing.action_token) {
+        updateData.action_token = generateToken();
+      }
+
       const { data, error } = await supabase.from('requests').update(updateData).eq('id', id).select().single();
       if (error) throw error;
 
       const { data: { user } } = await supabase.auth.getUser();
+      const token = data.action_token || existing.action_token;
 
       if (requestData.status && requestData.status !== existing.status) {
         await logActivity(id, 'Status Changed', user?.email || 'System', `Status changed from ${existing.status} to ${requestData.status}`);
-      }
-      if (requestData.assigned_to && requestData.assigned_to !== existing.assigned_to) {
-        const { data: assignee } = await supabase.from('users').select('name').eq('id', requestData.assigned_to).single();
-        await logActivity(id, 'Request Assigned', user?.email || 'System', `Assigned to ${assignee?.name || 'Unknown'}`);
-      }
-      await logActivity(id, 'Request Updated', user?.email || 'System', 'Request details updated');
 
+        // Send status change email to requester if email exists
+        if (existing.requester_email) {
+          sendEmail(existing.requester_email, `Status Update: ${existing.request_id}`, 'status_change', {
+            request_id: existing.request_id,
+            title: existing.title,
+            old_status: existing.status,
+            new_status: requestData.status,
+            token,
+          });
+        }
+      }
+
+      if (requestData.assigned_to && requestData.assigned_to !== existing.assigned_to) {
+        const { data: assignee } = await supabase.from('users').select('name, email').eq('id', requestData.assigned_to).single();
+        await logActivity(id, 'Request Assigned', user?.email || 'System', `Assigned to ${assignee?.name || 'Unknown'}`);
+
+        // Send assignment notification email
+        if (assignee?.email) {
+          sendEmail(assignee.email, `New Assignment: ${existing.request_id}`, 'assignment', {
+            ...data,
+            assigned_name: assignee.name,
+            token,
+          });
+        }
+      }
+
+      await logActivity(id, 'Request Updated', user?.email || 'System', 'Request details updated');
       return { request: data };
     },
 
