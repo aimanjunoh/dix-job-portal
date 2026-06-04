@@ -46,7 +46,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleAssign = async (requestId: number, userId: number) => {
+  const handleAssign = async (requestId: number, userId: string) => {
     try {
       await api.requests.update(requestId, { assigned_to: userId, status: 'New' });
       loadData();
