@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS projects (
   project_id TEXT UNIQUE NOT NULL,
   title TEXT NOT NULL,
   description TEXT DEFAULT '',
-  owner_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
   status TEXT DEFAULT 'Planning' CHECK (status IN ('Planning', 'Active', 'On Hold', 'Completed', 'Cancelled')),
   start_date DATE,
   due_date DATE,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS project_members (
   id BIGSERIAL PRIMARY KEY,
   project_id BIGINT REFERENCES projects(id) ON DELETE CASCADE,
-  user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   role TEXT DEFAULT 'member' CHECK (role IN ('owner', 'member')),
   joined_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE(project_id, user_id)
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS project_tasks (
   milestone_id BIGINT REFERENCES project_milestones(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   description TEXT DEFAULT '',
-  assigned_to TEXT REFERENCES users(id) ON DELETE SET NULL,
+  assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
   status TEXT DEFAULT 'Todo' CHECK (status IN ('Todo', 'In Progress', 'Review', 'Done')),
   priority TEXT DEFAULT 'Normal' CHECK (priority IN ('Low', 'Normal', 'High', 'Critical')),
   due_date DATE,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS project_tasks (
 CREATE TABLE IF NOT EXISTS project_notes (
   id BIGSERIAL PRIMARY KEY,
   project_id BIGINT REFERENCES projects(id) ON DELETE CASCADE,
-  user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
   note TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
