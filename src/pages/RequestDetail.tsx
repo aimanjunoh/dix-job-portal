@@ -48,7 +48,7 @@ export default function RequestDetail() {
     e.preventDefault();
     try {
       const data: any = { status: form.status, remarks: form.remarks, urgency: form.urgency };
-      if (isAdmin) data.assigned_to = form.assigned_to ? Number(form.assigned_to) : null;
+      if (isAdmin) data.assigned_to = form.assigned_to || null
       await api.requests.update(Number(id), data);
       toast.success('Request updated');
       setEditing(false);
