@@ -1,14 +1,12 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.FROM_EMAIL || 'DIX Portal <onboarding@resend.dev>';
 const PORTAL_URL = process.env.PORTAL_URL || 'https://dix-job-portal.vercel.app';
+const GMAIL_SCRIPT_URL = process.env.GMAIL_SCRIPT_URL || '';
+const GMAIL_WEBHOOK_SECRET = process.env.GMAIL_WEBHOOK_SECRET || 'dix-gmail-secret-2024';
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  if (!RESEND_API_KEY) {
-    return res.status(500).json({ error: 'RESEND_API_KEY not configured' });
   }
 
   const { to, subject, type, data } = req.body;
@@ -34,6 +32,31 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: 'Unknown email type' });
   }
 
+  // Try Gmail via Apps Script first
+  if (GMAIL_SCRIPT_URL) {
+    try {
+      const gmailRes = await fetch(GMAIL_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-webhook-secret': GMAIL_WEBHOOK_SECRET,
+        },
+        body: JSON.stringify({ to: Array.isArray(to) ? to : [to], subject: subject || 'DIX Job Portal Notification', html }),
+      });
+      if (gmailRes.ok) {
+        const result = await gmailRes.json();
+        return res.status(200).json({ success: true, method: 'gmail', ...result });
+      }
+    } catch (err: any) {
+      console.warn('Gmail send failed, falling back to Resend:', err.message);
+    }
+  }
+
+  // Fallback to Resend
+  if (!RESEND_API_KEY) {
+    return res.status(500).json({ error: 'No email service configured. Set GMAIL_SCRIPT_URL or RESEND_API_KEY.' });
+  }
+
   try {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -55,7 +78,7 @@ export default async function handler(req: any, res: any) {
     }
 
     const result = await response.json();
-    return res.status(200).json({ success: true, id: result.id });
+    return res.status(200).json({ success: true, method: 'resend', id: result.id });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

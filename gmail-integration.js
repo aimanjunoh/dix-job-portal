@@ -208,3 +208,54 @@ function addToProcessed(list, id) {
     list.push(id);
   }
 }
+
+// ============================================
+// OUTGOING EMAIL NOTIFICATIONS
+// ============================================
+// Deploy as Web App to receive POST requests from the portal
+// Triggers: status change, assignment, completion, etc.
+
+var NOTIFICATION_SECRET = 'dix-gmail-secret-2024';
+
+/**
+ * Handle POST requests from DIX Portal for sending notifications
+ */
+function doPost(e) {
+  try {
+    var secret = e.parameters.secret || '';
+    if (!secret || secret[0] !== NOTIFICATION_SECRET) {
+      var headers = e.headers || {};
+      secret = headers['x-webhook-secret'] || '';
+      if (secret !== NOTIFICATION_SECRET) {
+        return ContentService.createTextOutput(JSON.stringify({ error: 'Unauthorized' })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    var data = JSON.parse(e.postData.contents);
+    var to = data.to;
+    var subject = data.subject;
+    var htmlBody = data.html || '';
+
+    if (!to || !subject) {
+      return ContentService.createTextOutput(JSON.stringify({ error: 'Missing to or subject' })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Convert to array
+    var recipients = Array.isArray(to) ? to : [to];
+    var sentCount = 0;
+
+    for (var i = 0; i < recipients.length; i++) {
+      try {
+        GmailApp.sendEmail(recipients[i], subject, '', { htmlBody: htmlBody, name: 'DIX Job Portal' });
+        sentCount++;
+      } catch (err) {
+        Logger.log('Failed to send to ' + recipients[i] + ': ' + err.message);
+      }
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ success: true, sent: sentCount })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    Logger.log('doPost error: ' + err.message);
+    return ContentService.createTextOutput(JSON.stringify({ error: err.message })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
