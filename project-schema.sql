@@ -87,30 +87,40 @@ ALTER TABLE project_milestones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_notes ENABLE ROW LEVEL SECURITY;
 
--- Projects: all authenticated users can read
+-- Projects
+DROP POLICY IF EXISTS "Users can view projects" ON projects;
 CREATE POLICY "Users can view projects" ON projects FOR SELECT TO authenticated USING (true);
--- Projects: all authenticated users can insert
+DROP POLICY IF EXISTS "Users can create projects" ON projects;
 CREATE POLICY "Users can create projects" ON projects FOR INSERT TO authenticated WITH CHECK (true);
--- Projects: all authenticated users can update
+DROP POLICY IF EXISTS "Users can update projects" ON projects;
 CREATE POLICY "Users can update projects" ON projects FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
--- Projects: all authenticated users can delete
+DROP POLICY IF EXISTS "Users can delete projects" ON projects;
 CREATE POLICY "Users can delete projects" ON projects FOR DELETE TO authenticated USING (true);
 
 -- Members
+DROP POLICY IF EXISTS "Users can view project members" ON project_members;
 CREATE POLICY "Users can view project members" ON project_members FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Users can manage project members" ON project_members;
 CREATE POLICY "Users can manage project members" ON project_members FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Milestones
+DROP POLICY IF EXISTS "Users can view milestones" ON project_milestones;
 CREATE POLICY "Users can view milestones" ON project_milestones FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Users can manage milestones" ON project_milestones;
 CREATE POLICY "Users can manage milestones" ON project_milestones FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Tasks
+DROP POLICY IF EXISTS "Users can view tasks" ON project_tasks;
 CREATE POLICY "Users can view tasks" ON project_tasks FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Users can manage tasks" ON project_tasks;
 CREATE POLICY "Users can manage tasks" ON project_tasks FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Notes
+DROP POLICY IF EXISTS "Users can view notes" ON project_notes;
 CREATE POLICY "Users can view notes" ON project_notes FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Users can create notes" ON project_notes;
 CREATE POLICY "Users can create notes" ON project_notes FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can delete notes" ON project_notes;
 CREATE POLICY "Users can delete notes" ON project_notes FOR DELETE TO authenticated USING (true);
 
 -- ============================================
