@@ -39,18 +39,22 @@ export default async function handler(req: any, res: any) {
       const gmailRes = await fetch(GMAIL_SCRIPT_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-webhook-secret': GMAIL_WEBHOOK_SECRET,
+          'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({ to: Array.isArray(to) ? to : [to], subject: subject || 'DIX Job Portal Notification', html }),
+        body: JSON.stringify({ to: Array.isArray(to) ? to : [to], subject: subject || 'DIX Job Portal Notification', html, secret: GMAIL_WEBHOOK_SECRET }),
+        redirect: 'follow',
       });
       if (gmailRes.ok) {
         const result = await gmailRes.json();
         return res.status(200).json({ success: true, method: 'gmail', ...result });
+      } else {
+        console.warn(`Gmail send returned ${gmailRes.status}`);
       }
     } catch (err: any) {
       console.warn('Gmail send failed, falling back to Resend:', err.message);
     }
+  } else {
+    console.warn('GMAIL_SCRIPT_URL not set, using Resend');
   }
 
   // Fallback to Resend

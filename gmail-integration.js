@@ -222,16 +222,13 @@ var NOTIFICATION_SECRET = 'dix-gmail-secret-2024';
  */
 function doPost(e) {
   try {
-    var secret = e.parameters.secret || '';
-    if (!secret || secret[0] !== NOTIFICATION_SECRET) {
-      var headers = e.headers || {};
-      secret = headers['x-webhook-secret'] || '';
-      if (secret !== NOTIFICATION_SECRET) {
-        return ContentService.createTextOutput(JSON.stringify({ error: 'Unauthorized' })).setMimeType(ContentService.MimeType.JSON);
-      }
-    }
-
     var data = JSON.parse(e.postData.contents);
+
+    // Check secret from body or query params
+    var secret = data.secret || e.parameters.secret || '';
+    if (secret !== NOTIFICATION_SECRET) {
+      return ContentService.createTextOutput(JSON.stringify({ error: 'Unauthorized' })).setMimeType(ContentService.MimeType.JSON);
+    }
     var to = data.to;
     var subject = data.subject;
     var htmlBody = data.html || '';
