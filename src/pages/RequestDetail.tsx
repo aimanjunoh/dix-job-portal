@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 const STATUSES = ['New', 'In Progress', 'Pending Info', 'Completed'];
 const URGENCIES = ['Normal', 'Urgent', 'Critical'];
 
-export default function RequestDetail() {
+export default function RequestDetail() { 
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
