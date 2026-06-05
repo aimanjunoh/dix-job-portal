@@ -292,6 +292,18 @@ export const api = {
         });
       }
 
+      // Send confirmation email to requester
+      if (requestData.requester_email) {
+        sendEmail(requestData.requester_email, `Request Received: ${request_id} — ${requestData.title}`, 'request_received', {
+          request_id,
+          title: requestData.title,
+          requester_name: requestData.requester_name || requestData.requester_email.split('@')[0],
+          department: requestData.department || '',
+          urgency: requestData.urgency || 'Normal',
+          description: requestData.description || '',
+        });
+      }
+
       // If assigned, send assignment email
       if (requestData.assigned_to) {
         const { data: assignee } = await supabase.from('users').select('name, email').eq('id', requestData.assigned_to).single();

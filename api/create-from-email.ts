@@ -83,39 +83,37 @@ export default async function handler(req: any, res: any) {
 
     const adminEmails = (admins || []).map(a => a.email);
 
-    if (adminEmails.length > 0 && process.env.RESEND_API_KEY) {
-      const approveUrl = `${PORTAL_URL}/action?token=${action_token}&action=approve`;
-      const rejectUrl = `${PORTAL_URL}/action?token=${action_token}&action=reject`;
-
-      await fetch('https://api.resend.com/emails', {
+    // Send notification to admins via internal send-email API
+    if (adminEmails.length > 0) {
+      await fetch(`${PORTAL_URL}/api/send-email`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: process.env.FROM_EMAIL || 'DIX Portal <onboarding@resend.dev>',
           to: adminEmails,
           subject: `New Email Request: ${request_id} — ${subject}`,
-          html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 24px; border-radius: 16px 16px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 20px;">📧 New Email Request</h1>
-                <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">${request_id} from Gmail</p>
-              </div>
-              <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-                <table style="width: 100%; border-collapse: collapse;">
-                  <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px; width: 100px;">From</td><td style="padding: 8px 0; font-size: 14px;"><strong>${sender_name || sender_email}</strong> &lt;${sender_email}&gt;</td></tr>
-                  <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Subject</td><td style="padding: 8px 0; font-size: 14px; font-weight: 600;">${subject}</td></tr>
-                </table>
-                ${body ? `<div style="margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 8px; font-size: 13px; color: #374151; max-height: 200px; overflow-y: auto;">${body.substring(0, 500)}${body.length > 500 ? '...' : ''}</div>` : ''}
-                <div style="margin-top: 24px; display: flex; gap: 12px;">
-                  <a href="${approveUrl}" style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">✓ Approve & Assign</a>
-                  <a href="${rejectUrl}" style="display: inline-block; padding: 12px 24px; background: #ef4444; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">✗ Reject</a>
-                </div>
-              </div>
-            </div>
-          `,
+          type: 'new_request',
+          data: { ...data, requester_name: sender_name, token: action_token },
+        }),
+      });
+    }
+
+    // Send confirmation email to requester
+    if (sender_email) {
+      await fetch(`${PORTAL_URL}/api/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: sender_email,
+          subject: `Request Received: ${request_id} — ${subject}`,
+          type: 'request_received',
+          data: {
+            request_id,
+            title: subject,
+            requester_name: sender_name || sender_email.split('@')[0],
+            department,
+            urgency,
+            description: body || '',
+          },
         }),
       });
     }
