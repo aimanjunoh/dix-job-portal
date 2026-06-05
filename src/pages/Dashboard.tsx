@@ -65,12 +65,12 @@ export default function Dashboard() {
   );
 
   const cards = [
-    { label: 'Total Requests', value: stats.total, icon: ClipboardList, color: 'from-blue-500 to-blue-700' },
-    { label: 'New', value: stats.new, icon: PlusCircle, color: 'from-red-400 to-red-600' },
-    { label: 'Unassigned', value: stats.unassigned, icon: UserCheck, color: 'from-orange-400 to-orange-600' },
-    { label: 'In Progress', value: stats.inProgress, icon: Clock, color: 'from-blue-400 to-blue-600' },
-    { label: 'Pending Info', value: stats.pendingInfo, icon: AlertCircle, color: 'from-yellow-400 to-yellow-600' },
-    { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'from-green-400 to-green-600' },
+    { label: 'Total Requests', value: stats.total, icon: ClipboardList, color: 'from-blue-500 to-blue-700', filter: '' },
+    { label: 'New', value: stats.new, icon: PlusCircle, color: 'from-red-400 to-red-600', filter: 'status=New' },
+    { label: 'Unassigned', value: stats.unassigned, icon: UserCheck, color: 'from-orange-400 to-orange-600', filter: 'unassigned=true' },
+    { label: 'In Progress', value: stats.inProgress, icon: Clock, color: 'from-blue-400 to-blue-600', filter: 'status=In+Progress' },
+    { label: 'Pending Info', value: stats.pendingInfo, icon: AlertCircle, color: 'from-yellow-400 to-yellow-600', filter: 'status=Pending+Info' },
+    { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'from-green-400 to-green-600', filter: 'status=Completed' },
   ];
 
   return (
@@ -84,7 +84,7 @@ export default function Dashboard() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {cards.map((card) => (
-          <div key={card.label} className="glass-card p-4 text-center">
+          <div key={card.label} onClick={() => navigate(`/requests?${card.filter}`)} className="glass-card p-4 text-center cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all">
             <div className={`w-10 h-10 bg-gradient-to-br ${card.color} rounded-xl flex items-center justify-center mx-auto mb-2`}>
               <card.icon className="text-white" size={18} />
             </div>

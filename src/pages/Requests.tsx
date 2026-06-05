@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/shared/Modal';
@@ -13,12 +13,14 @@ const URGENCIES = ['Normal', 'Urgent', 'Critical'];
 export default function Requests() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [requests, setRequests] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [unassignedOnly, setUnassignedOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingReq, setEditingReq] = useState<any>(null);
@@ -31,7 +33,14 @@ export default function Requests() {
     urgency: 'Normal', description: '', assigned_to: '', status: 'New', remarks: ''
   });
 
-  useEffect(() => { loadRequests(); }, [page, search, statusFilter, hideCompleted]);
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const unassigned = searchParams.get('unassigned');
+    if (status) setStatusFilter(status);
+    if (unassigned === 'true') setUnassignedOnly(true);
+  }, []);
+
+  useEffect(() => { loadRequests(); }, [page, search, statusFilter, hideCompleted, unassignedOnly]);
   useEffect(() => { api.users.all().then(d => setStaffList(d.users)).catch(() => {}); }, []);
 
   const loadRequests = async () => {
@@ -41,6 +50,7 @@ export default function Requests() {
       if (search) params.search = search;
       if (statusFilter) params.status = statusFilter;
       if (hideCompleted) params.hideCompleted = 'true';
+      if (unassignedOnly) params.unassigned = 'true';
       const data = await api.requests.list(params);
       setRequests(data.requests);
       setTotal(data.total);
@@ -131,6 +141,11 @@ export default function Requests() {
             <input type="checkbox" checked={hideCompleted} onChange={(e) => { setHideCompleted(e.target.checked); setPage(1); }}
               className="rounded border-gray-300 text-primary-500 focus:ring-primary-500" />
             Hide Completed
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <input type="checkbox" checked={unassignedOnly} onChange={(e) => { setUnassignedOnly(e.target.checked); setPage(1); }}
+              className="rounded border-gray-300 text-primary-500 focus:ring-primary-500" />
+            Unassigned Only
           </label>
         </div>
       </div>

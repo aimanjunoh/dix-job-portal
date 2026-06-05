@@ -177,6 +177,9 @@ export const api = {
       if (params.hideCompleted === 'true') {
         query = query.neq('status', 'Completed');
       }
+      if (params.unassigned === 'true') {
+        query = query.is('assigned_to', null);
+      }
 
       const { data, count, error } = await query.range(from, to);
       if (error) throw error;
