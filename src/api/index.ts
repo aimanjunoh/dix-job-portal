@@ -264,6 +264,7 @@ export const api = {
         assigned_to: requestData.assigned_to || null,
         status: requestData.status || 'New',
         remarks: requestData.remarks || '',
+        due_date: requestData.due_date || null,
         action_token,
       }).select().single();
       if (error) throw error;
@@ -322,22 +323,35 @@ export const api = {
         updateData.action_token = generateToken();
       }
 
+      if (requestData.due_date !== undefined) updateData.due_date = requestData.due_date || null;
+
       const { data, error } = await supabase.from('requests').update(updateData).eq('id', id).select().single();
       if (error) throw error;
 
       const { data: { user } } = await supabase.auth.getUser();
       const token = data.action_token || existing.action_token;
 
+      // Get status history for email
+      const { data: historyLogs } = await supabase
+        .from('activity_logs')
+        .select('action, details, timestamp')
+        .eq('request_id', id)
+        .order('timestamp', { ascending: false })
+        .limit(5);
+
       if (requestData.status && requestData.status !== existing.status) {
         await logActivity(id, 'Status Changed', user?.email || 'System', `Status changed from ${existing.status} to ${requestData.status}`);
 
-        // Send status change email to requester if email exists
+        // Send email to requester
         if (existing.requester_email) {
-          sendEmail(existing.requester_email, `Status Update: ${existing.request_id}`, 'status_change', {
+          const emailType = requestData.status === 'Completed' ? 'completed' : requestData.status === 'Pending Info' ? 'pending_info' : 'status_change';
+          sendEmail(existing.requester_email, `${requestData.status === 'Completed' ? '✅ Completed' : requestData.status === 'Pending Info' ? '⚠️ Action Needed' : '📊 Update'}: ${existing.request_id}`, emailType, {
             request_id: existing.request_id,
             title: existing.title,
             old_status: existing.status,
             new_status: requestData.status,
+            remarks: requestData.remarks || data.remarks || '',
+            history: historyLogs || [],
             token,
           });
         }
@@ -347,13 +361,25 @@ export const api = {
         const { data: assignee } = await supabase.from('users').select('name, email').eq('id', requestData.assigned_to).single();
         await logActivity(id, 'Request Assigned', user?.email || 'System', `Assigned to ${assignee?.name || 'Unknown'}`);
 
-        // Send assignment notification email
         if (assignee?.email) {
           sendEmail(assignee.email, `New Assignment: ${existing.request_id}`, 'assignment', {
             ...data,
             assigned_name: assignee.name,
             token,
           });
+        }
+
+        // Notify old assignee if changed
+        if (existing.assigned_to) {
+          const { data: oldAssignee } = await supabase.from('users').select('name, email').eq('id', existing.assigned_to).single();
+          if (oldAssignee?.email) {
+            sendEmail(oldAssignee.email, `Assignment Changed: ${existing.request_id}`, 'reassigned', {
+              request_id: existing.request_id,
+              title: existing.title,
+              old_name: oldAssignee.name,
+              token,
+            });
+          }
         }
       }
 

@@ -18,13 +18,18 @@ export default async function handler(req: any, res: any) {
   }
 
   let html = '';
+  const builders: Record<string, (d: any) => string> = {
+    new_request: buildNewRequestEmail,
+    assignment: buildAssignmentEmail,
+    reassigned: buildReassignedEmail,
+    status_change: buildStatusChangeEmail,
+    completed: buildCompletedEmail,
+    pending_info: buildPendingInfoEmail,
+    overdue: buildOverdueEmail,
+  };
 
-  if (type === 'new_request') {
-    html = buildNewRequestEmail(data);
-  } else if (type === 'assignment') {
-    html = buildAssignmentEmail(data);
-  } else if (type === 'status_change') {
-    html = buildStatusChangeEmail(data);
+  if (builders[type]) {
+    html = builders[type](data);
   } else {
     return res.status(400).json({ error: 'Unknown email type' });
   }
@@ -56,8 +61,18 @@ export default async function handler(req: any, res: any) {
   }
 }
 
+function historyHtml(history: any[]): string {
+  if (!history || history.length === 0) return '';
+  return `
+    <div style="margin-top: 16px; padding: 12px; background: #f9fafb; border-radius: 8px;">
+      <p style="font-size: 12px; color: #6b7280; font-weight: 600; margin: 0 0 8px;">Recent Activity</p>
+      ${history.map(h => `<div style="font-size: 12px; color: #374151; padding: 4px 0; border-bottom: 1px solid #e5e7eb;"><strong>${h.action}</strong> — ${h.details} <span style="color: #9ca3af; font-size: 11px;">(${new Date(h.timestamp).toLocaleDateString()})</span></div>`).join('')}
+    </div>
+  `;
+}
+
 function buildNewRequestEmail(data: any): string {
-  const { request_id, title, requester_name, department, urgency, description, token, admin_emails } = data;
+  const { request_id, title, requester_name, department, urgency, description, token } = data;
   const approveUrl = `${PORTAL_URL}/action?token=${token}&action=approve`;
   const rejectUrl = `${PORTAL_URL}/action?token=${token}&action=reject`;
   const viewUrl = `${PORTAL_URL}/requests`;
@@ -65,7 +80,7 @@ function buildNewRequestEmail(data: any): string {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
       <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 24px; border-radius: 16px 16px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 20px;">🆕 New Job Request</h1>
+        <h1 style="color: white; margin: 0; font-size: 20px;">New Job Request</h1>
         <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">${request_id} requires your attention</p>
       </div>
       <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
@@ -76,25 +91,24 @@ function buildNewRequestEmail(data: any): string {
           <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Urgency</td><td style="padding: 8px 0; font-size: 14px;"><span style="background: ${urgency === 'Critical' ? '#fee2e2' : urgency === 'Urgent' ? '#fef3c7' : '#f3f4f6'}; color: ${urgency === 'Critical' ? '#dc2626' : urgency === 'Urgent' ? '#d97706' : '#374151'}; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">${urgency}</span></td></tr>
         </table>
         ${description ? `<div style="margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 8px; font-size: 13px; color: #374151;">${description}</div>` : ''}
-        <div style="margin-top: 24px; display: flex; gap: 12px;">
-          <a href="${approveUrl}" style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">✓ Approve</a>
-          <a href="${rejectUrl}" style="display: inline-block; padding: 12px 24px; background: #ef4444; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">✗ Reject</a>
-          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #f3f4f6; color: #374151; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View All</a>
+        <div style="margin-top: 24px;">
+          <a href="${approveUrl}" style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">Approve</a>
+          <a href="${rejectUrl}" style="display: inline-block; padding: 12px 24px; background: #ef4444; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px; margin-left: 8px;">Reject</a>
+          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #f3f4f6; color: #374151; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px; margin-left: 8px;">View All</a>
         </div>
-        <p style="margin-top: 16px; font-size: 12px; color: #9ca3af;">Or open the portal to manage this request with full details.</p>
       </div>
     </div>
   `;
 }
 
 function buildAssignmentEmail(data: any): string {
-  const { request_id, title, requester_name, assigned_name, token } = data;
+  const { request_id, title, requester_name, assigned_name, urgency, due_date, token } = data;
   const viewUrl = `${PORTAL_URL}/action?token=${token}&action=view`;
 
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
       <div style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); padding: 24px; border-radius: 16px 16px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 20px;">📋 New Assignment</h1>
+        <h1 style="color: white; margin: 0; font-size: 20px;">New Assignment</h1>
         <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">Hi ${assigned_name}, you've been assigned a request</p>
       </div>
       <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
@@ -102,9 +116,31 @@ function buildAssignmentEmail(data: any): string {
           <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px; width: 120px;">Request ID</td><td style="padding: 8px 0; font-size: 14px; font-weight: 600;">${request_id}</td></tr>
           <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Title</td><td style="padding: 8px 0; font-size: 14px;">${title}</td></tr>
           <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Requester</td><td style="padding: 8px 0; font-size: 14px;">${requester_name}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Urgency</td><td style="padding: 8px 0; font-size: 14px;">${urgency || 'Normal'}</td></tr>
+          ${due_date ? `<tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Due Date</td><td style="padding: 8px 0; font-size: 14px; font-weight: 600; color: #dc2626;">${due_date}</td></tr>` : ''}
         </table>
         <div style="margin-top: 24px;">
-          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request Details</a>
+          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildReassignedEmail(data: any): string {
+  const { request_id, title, old_name, token } = data;
+  const viewUrl = `${PORTAL_URL}/action?token=${token}&action=view`;
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
+      <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 24px; border-radius: 16px 16px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 20px;">Assignment Changed</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">Hi ${old_name}, this request has been reassigned</p>
+      </div>
+      <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <p style="font-size: 14px; color: #374151;">Request <strong>${request_id}</strong> — <strong>${title}</strong> has been assigned to someone else.</p>
+        <div style="margin-top: 16px;">
+          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
         </div>
       </div>
     </div>
@@ -112,19 +148,104 @@ function buildAssignmentEmail(data: any): string {
 }
 
 function buildStatusChangeEmail(data: any): string {
-  const { request_id, title, old_status, new_status, token } = data;
+  const { request_id, title, old_status, new_status, remarks, history, token } = data;
   const viewUrl = `${PORTAL_URL}/action?token=${token}&action=view`;
 
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
       <div style="background: linear-gradient(135deg, #059669, #047857); padding: 24px; border-radius: 16px 16px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 20px;">📊 Status Update</h1>
+        <h1 style="color: white; margin: 0; font-size: 20px;">Status Update</h1>
         <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">${request_id}: ${old_status} → ${new_status}</p>
       </div>
       <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-        <p style="font-size: 14px; color: #374151;">Request <strong>${title}</strong> has been updated from <strong>${old_status}</strong> to <strong>${new_status}</strong>.</p>
+        <p style="font-size: 14px; color: #374151;">Request <strong>${title}</strong> status changed from <strong>${old_status}</strong> to <strong>${new_status}</strong>.</p>
+        ${remarks ? `<div style="margin-top: 8px; padding: 10px; background: #f9fafb; border-radius: 8px; font-size: 13px; color: #374151;"><strong>Remarks:</strong> ${remarks}</div>` : ''}
+        ${historyHtml(history)}
         <div style="margin-top: 24px;">
           <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildCompletedEmail(data: any): string {
+  const { request_id, title, remarks, history, token } = data;
+  const viewUrl = `${PORTAL_URL}/action?token=${token}&action=view`;
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
+      <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 24px; border-radius: 16px 16px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 20px;">Request Completed</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">${request_id} has been completed</p>
+      </div>
+      <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <p style="font-size: 14px; color: #374151;">Your request <strong>${title}</strong> (${request_id}) has been marked as <strong style="color: #10b981;">Completed</strong>.</p>
+        ${remarks ? `<div style="margin-top: 8px; padding: 10px; background: #f0fdf4; border-radius: 8px; font-size: 13px; color: #374151; border: 1px solid #bbf7d0;"><strong>Remarks:</strong> ${remarks}</div>` : ''}
+        ${historyHtml(history)}
+        <div style="margin-top: 24px;">
+          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Details</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildPendingInfoEmail(data: any): string {
+  const { request_id, title, remarks, history, token } = data;
+  const viewUrl = `${PORTAL_URL}/action?token=${token}&action=view`;
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
+      <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 24px; border-radius: 16px 16px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 20px;">Action Needed</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">${request_id} requires additional information</p>
+      </div>
+      <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <p style="font-size: 14px; color: #374151;">Your request <strong>${title}</strong> (${request_id}) has been set to <strong style="color: #d97706;">Pending Info</strong> — additional information or content is needed to proceed.</p>
+        ${remarks ? `<div style="margin-top: 8px; padding: 10px; background: #fffbeb; border-radius: 8px; font-size: 13px; color: #374151; border: 1px solid #fde68a;"><strong>What's needed:</strong> ${remarks}</div>` : ''}
+        ${historyHtml(history)}
+        <div style="margin-top: 24px;">
+          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #f59e0b; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">Provide Information</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildOverdueEmail(data: any): string {
+  const { requests } = data;
+  const viewUrl = `${PORTAL_URL}/requests?status=In+Progress`;
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
+      <div style="background: linear-gradient(135deg, #ef4444, #dc2626); padding: 24px; border-radius: 16px 16px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 20px;">Overdue Tasks Reminder</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">${requests.length} task(s) past due date</p>
+      </div>
+      <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <thead>
+            <tr style="border-bottom: 2px solid #e5e7eb;">
+              <th style="text-align: left; padding: 8px 4px; color: #6b7280;">ID</th>
+              <th style="text-align: left; padding: 8px 4px; color: #6b7280;">Title</th>
+              <th style="text-align: left; padding: 8px 4px; color: #6b7280;">Due Date</th>
+              <th style="text-align: left; padding: 8px 4px; color: #6b7280;">Days Over</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${requests.map((r: any) => `
+              <tr style="border-bottom: 1px solid #f3f4f6;">
+                <td style="padding: 8px 4px; font-family: monospace; color: #6b7280;">${r.request_id}</td>
+                <td style="padding: 8px 4px; font-weight: 500;">${r.title}</td>
+                <td style="padding: 8px 4px; color: #dc2626;">${r.due_date}</td>
+                <td style="padding: 8px 4px;"><span style="background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">${r.days_over} days</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top: 24px;">
+          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #ef4444; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View All In Progress</a>
         </div>
       </div>
     </div>
