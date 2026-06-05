@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -49,9 +50,11 @@ export default function Dashboard() {
   const handleAssign = async (requestId: number, userId: string) => {
     try {
       await api.requests.update(requestId, { assigned_to: userId, status: 'New' });
+      toast.success('Assigned successfully');
       loadData();
     } catch (err: any) {
       console.error(err);
+      toast.error('Failed to assign');
     }
   };
 
@@ -122,7 +125,7 @@ export default function Dashboard() {
                       <select
                         className="flex-1 text-xs px-2 py-1.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
                         onChange={(e) => {
-                          if (e.target.value) handleAssign(req.id, Number(e.target.value));
+                          if (e.target.value) handleAssign(req.id, e.target.value);
                         }}
                         defaultValue=""
                       >
