@@ -376,7 +376,11 @@ export const api = {
           const sent = await sendEmail(existing.requester_email, emailSubject, emailType, emailData);
           if (!sent) {
             console.warn(`Failed to send ${emailType} email to requester ${existing.requester_email}`);
+          } else {
+            console.log(`Email sent to requester: ${existing.requester_email}`);
           }
+        } else {
+          console.warn('No requester_email set — skipping requester email');
         }
 
         // Also send completion/status emails to admins
@@ -384,7 +388,10 @@ export const api = {
           const adminEmails = await getAdminEmails();
           const filteredAdmins = adminEmails.filter(e => e !== existing.requester_email);
           if (filteredAdmins.length > 0) {
-            await sendEmail(filteredAdmins, emailSubject, emailType, emailData);
+            const adminSent = await sendEmail(filteredAdmins, emailSubject, emailType, emailData);
+            if (adminSent) {
+              console.log(`Email sent to admins: ${filteredAdmins.join(', ')}`);
+            }
           }
         }
       }
