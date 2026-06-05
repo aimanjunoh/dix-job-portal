@@ -36,9 +36,14 @@ async function sendEmail(to: string | string[], subject: string, type: string, d
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ to, subject, type, data }),
     });
-    return res.ok;
-  } catch {
-    console.warn('Email send failed — RESEND_API_KEY may not be configured');
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error(`Email send failed (${res.status}):`, errBody);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Email send error:', err);
     return false;
   }
 }
@@ -342,18 +347,33 @@ export const api = {
       if (requestData.status && requestData.status !== existing.status) {
         await logActivity(id, 'Status Changed', user?.email || 'System', `Status changed from ${existing.status} to ${requestData.status}`);
 
+        const emailType = requestData.status === 'Completed' ? 'completed' : requestData.status === 'Pending Info' ? 'pending_info' : 'status_change';
+        const emailSubject = `${requestData.status === 'Completed' ? '✅ Completed' : requestData.status === 'Pending Info' ? '⚠️ Action Needed' : '📊 Update'}: ${existing.request_id}`;
+        const emailData = {
+          request_id: existing.request_id,
+          title: existing.title,
+          old_status: existing.status,
+          new_status: requestData.status,
+          remarks: requestData.remarks || data.remarks || '',
+          history: historyLogs || [],
+          token,
+        };
+
         // Send email to requester
         if (existing.requester_email) {
-          const emailType = requestData.status === 'Completed' ? 'completed' : requestData.status === 'Pending Info' ? 'pending_info' : 'status_change';
-          sendEmail(existing.requester_email, `${requestData.status === 'Completed' ? '✅ Completed' : requestData.status === 'Pending Info' ? '⚠️ Action Needed' : '📊 Update'}: ${existing.request_id}`, emailType, {
-            request_id: existing.request_id,
-            title: existing.title,
-            old_status: existing.status,
-            new_status: requestData.status,
-            remarks: requestData.remarks || data.remarks || '',
-            history: historyLogs || [],
-            token,
-          });
+          const sent = await sendEmail(existing.requester_email, emailSubject, emailType, emailData);
+          if (!sent) {
+            console.warn(`Failed to send ${emailType} email to requester ${existing.requester_email}`);
+          }
+        }
+
+        // Also send completion/status emails to admins
+        if (requestData.status === 'Completed' || requestData.status === 'Pending Info') {
+          const adminEmails = await getAdminEmails();
+          const filteredAdmins = adminEmails.filter(e => e !== existing.requester_email);
+          if (filteredAdmins.length > 0) {
+            await sendEmail(filteredAdmins, emailSubject, emailType, emailData);
+          }
         }
       }
 
