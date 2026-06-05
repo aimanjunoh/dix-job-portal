@@ -71,7 +71,7 @@ export default function Requests() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      const data = { ...form, assigned_to: form.assigned_to ? Number(form.assigned_to) : null };
+      const data = { ...form, assigned_to: form.assigned_to || null };
       if (editingReq) {
         await api.requests.update(editingReq.id, data);
         toast.success('Request updated');
