@@ -414,4 +414,188 @@ export const api = {
       return { activities: data || [], total: count || 0, page, limit };
     },
   },
+
+  projects: {
+    generateId: async () => {
+      const { data } = await supabase.from('projects').select('project_id').order('id', { ascending: false }).limit(1).single();
+      if (!data) return 'PRJ-0001';
+      const num = parseInt(data.project_id.replace('PRJ-', '')) + 1;
+      return `PRJ-${String(num).padStart(4, '0')}`;
+    },
+
+    list: async (params: Record<string, any> = {}) => {
+      let query = supabase
+        .from('projects')
+        .select('*, users!owner_id(name)', { count: 'exact' })
+        .order('created_at', { ascending: false });
+
+      if (params.status) query = query.eq('status', params.status);
+      if (params.search) query = query.or(`title.ilike.%${params.search}%,project_id.ilike.%${params.search}%`);
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+
+      // Get member counts
+      const projects = (data || []).map((p: any) => ({
+        ...p,
+        owner_name: p.users?.name || null,
+        users: undefined,
+      }));
+
+      return { projects, total: count || 0 };
+    },
+
+    get: async (id: number) => {
+      const { data: project, error } = await supabase
+        .from('projects')
+        .select('*, users!owner_id(name)')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+
+      const [{ data: members }, { data: milestones }, { data: tasks }, { data: notes }] = await Promise.all([
+        supabase.from('project_members').select('*, users(name, email)').eq('project_id', id),
+        supabase.from('project_milestones').select('*').eq('project_id', id).order('sort_order'),
+        supabase.from('project_tasks').select('*, users(name), project_milestones(title)').eq('project_id', id).order('sort_order'),
+        supabase.from('project_notes').select('*, users(name)').eq('project_id', id).order('created_at', { ascending: false }),
+      ]);
+
+      return {
+        project: { ...project, owner_name: project?.users?.name || null, users: undefined },
+        members: members || [],
+        milestones: milestones || [],
+        tasks: (tasks || []).map((t: any) => ({ ...t, assigned_name: t.users?.name || null, milestone_title: t.project_milestones?.title || null, users: undefined, project_milestones: undefined })),
+        notes: (notes || []).map((n: any) => ({ ...n, user_name: n.users?.name || null, users: undefined })),
+      };
+    },
+
+    create: async (data: any) => {
+      const project_id = await api.projects.generateId();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data: project, error } = await supabase.from('projects').insert({
+        project_id,
+        title: data.title,
+        description: data.description || '',
+        owner_id: data.owner_id || user?.id,
+        status: data.status || 'Planning',
+        start_date: data.start_date || null,
+        due_date: data.due_date || null,
+        progress: data.progress || 0,
+      }).select().single();
+      if (error) throw error;
+
+      // Add owner as member
+      if (project.owner_id) {
+        await supabase.from('project_members').insert({ project_id: project.id, user_id: project.owner_id, role: 'owner' });
+      }
+
+      // Add team members
+      if (data.member_ids && data.member_ids.length > 0) {
+        const memberInserts = data.member_ids.map((uid: string) => ({ project_id: project.id, user_id: uid, role: 'member' }));
+        await supabase.from('project_members').insert(memberInserts);
+      }
+
+      await logActivity(null, 'Project Created', user?.email || 'System', `Project ${project_id}: ${data.title}`);
+      return { project };
+    },
+
+    update: async (id: number, data: any) => {
+      const updateData: any = {};
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.owner_id !== undefined) updateData.owner_id = data.owner_id;
+      if (data.status !== undefined) updateData.status = data.status;
+      if (data.start_date !== undefined) updateData.start_date = data.start_date || null;
+      if (data.due_date !== undefined) updateData.due_date = data.due_date || null;
+      if (data.progress !== undefined) updateData.progress = data.progress;
+
+      const { data: project, error } = await supabase.from('projects').update(updateData).eq('id', id).select().single();
+      if (error) throw error;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      await logActivity(null, 'Project Updated', user?.email || 'System', `Project ${project.project_id} updated`);
+      return { project };
+    },
+
+    delete: async (id: number) => {
+      const { data: project } = await supabase.from('projects').select('project_id').eq('id', id).single();
+      const { error } = await supabase.from('projects').delete().eq('id', id);
+      if (error) throw error;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      await logActivity(null, 'Project Deleted', user?.email || 'System', `Project ${project?.project_id} deleted`);
+      return { message: 'Project deleted' };
+    },
+
+    // Milestones
+    addMilestone: async (projectId: number, data: any) => {
+      const { data: milestone, error } = await supabase.from('project_milestones').insert({
+        project_id: projectId, title: data.title, description: data.description || '', due_date: data.due_date || null, sort_order: data.sort_order || 0,
+      }).select().single();
+      if (error) throw error;
+      return { milestone };
+    },
+
+    updateMilestone: async (id: number, data: any) => {
+      const { data: milestone, error } = await supabase.from('project_milestones').update(data).eq('id', id).select().single();
+      if (error) throw error;
+      return { milestone };
+    },
+
+    deleteMilestone: async (id: number) => {
+      const { error } = await supabase.from('project_milestones').delete().eq('id', id);
+      if (error) throw error;
+      return { message: 'Milestone deleted' };
+    },
+
+    // Tasks
+    addTask: async (projectId: number, data: any) => {
+      const { data: task, error } = await supabase.from('project_tasks').insert({
+        project_id: projectId, milestone_id: data.milestone_id || null, title: data.title, description: data.description || '',
+        assigned_to: data.assigned_to || null, status: data.status || 'Todo', priority: data.priority || 'Normal', due_date: data.due_date || null, sort_order: data.sort_order || 0,
+      }).select().single();
+      if (error) throw error;
+      return { task };
+    },
+
+    updateTask: async (id: number, data: any) => {
+      const { data: task, error } = await supabase.from('project_tasks').update(data).eq('id', id).select().single();
+      if (error) throw error;
+      return { task };
+    },
+
+    deleteTask: async (id: number) => {
+      const { error } = await supabase.from('project_tasks').delete().eq('id', id);
+      if (error) throw error;
+      return { message: 'Task deleted' };
+    },
+
+    // Members
+    addMember: async (projectId: number, userId: string) => {
+      const { data, error } = await supabase.from('project_members').insert({ project_id: projectId, user_id: userId }).select().single();
+      if (error) throw error;
+      return { member: data };
+    },
+
+    removeMember: async (projectId: number, userId: string) => {
+      const { error } = await supabase.from('project_members').delete().eq('project_id', projectId).eq('user_id', userId);
+      if (error) throw error;
+      return { message: 'Member removed' };
+    },
+
+    // Notes
+    addNote: async (projectId: number, note: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.from('project_notes').insert({ project_id: projectId, user_id: user?.id, note }).select('*, users(name)').single();
+      if (error) throw error;
+      return { note: { ...data, user_name: data?.users?.name || null, users: undefined } };
+    },
+
+    deleteNote: async (id: number) => {
+      const { error } = await supabase.from('project_notes').delete().eq('id', id);
+      if (error) throw error;
+      return { message: 'Note deleted' };
+    },
+  },
 };

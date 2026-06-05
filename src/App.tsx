@@ -9,6 +9,8 @@ import Requests from './pages/Requests';
 import RequestDetail from './pages/RequestDetail';
 import Activities from './pages/Activities';
 import QuickAction from './pages/QuickAction';
+import Projects from './pages/Projects';
+import ProjectDetail from './pages/ProjectDetail';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -38,6 +40,8 @@ function AppRoutes() {
         <Route path="requests" element={<Requests />} />
         <Route path="requests/:id" element={<RequestDetail />} />
         <Route path="activities" element={<Activities />} />
+        <Route path="projects" element={<Projects />} />
+        <Route path="projects/:id" element={<ProjectDetail />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
