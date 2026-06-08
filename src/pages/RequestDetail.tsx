@@ -12,7 +12,7 @@ const URGENCIES = ['Normal', 'Urgent', 'Critical'];
 export default function RequestDetail() { 
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isGuest } = useAuth();
   const [request, setRequest] = useState<any>(null);
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,9 +83,11 @@ export default function RequestDetail() {
           </div>
           <p className="text-white/70 text-sm mt-1">{request.title}</p>
         </div>
-        <button onClick={() => setEditing(!editing)} className="flex items-center gap-2 px-4 py-2 bg-white text-primary-600 rounded-xl text-sm font-medium hover:shadow-lg transition-all">
-          <Edit2 size={14} /> {editing ? 'Cancel' : 'Edit'}
-        </button>
+        {!isGuest && (
+          <button onClick={() => setEditing(!editing)} className="flex items-center gap-2 px-4 py-2 bg-white text-primary-600 rounded-xl text-sm font-medium hover:shadow-lg transition-all">
+            <Edit2 size={14} /> {editing ? 'Cancel' : 'Edit'}
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

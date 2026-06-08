@@ -18,7 +18,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
+  guestLogin: () => Promise<boolean>;
   isAdmin: boolean;
+  isGuest: boolean;
   refreshProfile: () => Promise<void>;
 }
 
@@ -74,6 +76,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const guestLogin = async (): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: 'guest@dix.local',
+        password: 'guest123',
+      });
+      return !error;
+    } catch {
+      return false;
+    }
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
     setProfile(null);
@@ -91,7 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       signup,
       logout,
+      guestLogin,
       isAdmin: profile?.role === 'admin',
+      isGuest: profile?.role === 'guest',
       refreshProfile,
     }}>
       {children}

@@ -1,16 +1,17 @@
 import { useState, FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Eye, EyeOff } from 'lucide-react';
+import { Shield, Eye, EyeOff, EyeIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Login() {
-  const { login, signup } = useAuth();
+  const { login, signup, guestLogin } = useAuth();
   const [isSignup, setIsSignup] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -83,6 +84,33 @@ export default function Login() {
               {isSignup ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
             </button>
           </div>
+
+          {!isSignup && (
+            <div className="mt-4 pt-4 border-t border-gray-200/50">
+              <button
+                onClick={async () => {
+                  setGuestLoading(true);
+                  try {
+                    const ok = await guestLogin();
+                    if (!ok) {
+                      toast.error('Guest account not found. Ask admin to create a guest user (guest@dix.local) first.');
+                    } else {
+                      toast.success('Welcome, Guest! You are in preview mode (read-only).');
+                    }
+                  } catch {
+                    toast.error('Guest login failed');
+                  } finally {
+                    setGuestLoading(false);
+                  }
+                }}
+                disabled={guestLoading}
+                className="w-full py-3 bg-white/60 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-white/80 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <EyeIcon size={18} />
+                {guestLoading ? 'Loading...' : 'Guest Preview (Read-Only)'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

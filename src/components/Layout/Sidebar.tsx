@@ -11,7 +11,7 @@ const navItems = [
 ];
 
 export default function Sidebar({ onClose }: { onClose: () => void }) {
-  const { profile, logout, isAdmin } = useAuth();
+  const { profile, logout, isAdmin, isGuest } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -60,7 +60,11 @@ export default function Sidebar({ onClose }: { onClose: () => void }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-800 truncate">{profile?.name || 'Loading...'}</p>
-            <p className="text-xs text-gray-500 capitalize">{profile?.role || ''}</p>
+            {isGuest ? (
+              <p className="text-xs text-amber-600 font-semibold">👁 Guest Mode (Read-Only)</p>
+            ) : (
+              <p className="text-xs text-gray-500 capitalize">{profile?.role || ''}</p>
+            )}
           </div>
           <button onClick={handleLogout} className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors" title="Logout">
             <LogOut size={16} />

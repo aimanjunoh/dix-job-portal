@@ -25,6 +25,7 @@ export default async function handler(req: any, res: any) {
     pending_info: buildPendingInfoEmail,
     overdue: buildOverdueEmail,
     request_received: buildRequestReceivedEmail,
+    daily_digest: buildDailyDigestEmail,
   };
 
   if (builders[type]) {
@@ -301,6 +302,97 @@ function buildRequestReceivedEmail(data: any): string {
         <div style="margin-top: 20px; padding: 12px; background: #eef2ff; border-radius: 8px; font-size: 13px; color: #4338ca;">
           <strong>What happens next?</strong><br>
           The DIX team will review your request and assign it to the appropriate team member. You will receive another email once the status is updated.
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildDailyDigestEmail(data: any): string {
+  const { unassigned, overdue, dueToday, totalInProgress, escalated } = data;
+  const portalUrl = PORTAL_URL;
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  const renderRequests = (items: any[]) => items.map((r: any) => `
+    <tr style="border-bottom: 1px solid #f3f4f6;">
+      <td style="padding: 6px 4px; font-family: monospace; color: #6b7280; font-size: 12px;">${r.request_id || r.id}</td>
+      <td style="padding: 6px 4px; font-size: 13px; font-weight: 500;">${r.title}</td>
+      <td style="padding: 6px 4px; font-size: 12px; color: #6b7280;">${r.assigned_name || 'Unassigned'}</td>
+    </tr>
+  `).join('');
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
+      <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 24px; border-radius: 16px 16px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 20px;">📋 Daily Digest</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">${today}</p>
+      </div>
+      <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <!-- Summary Stats -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <tr>
+            <td style="width: 33%; text-align: center; padding: 12px; background: #fef3c7; border-radius: 12px 0 0 0;">
+              <p style="font-size: 24px; font-weight: 700; color: #d97706; margin: 0;">${unassigned?.length || 0}</p>
+              <p style="font-size: 11px; color: #92400e; margin: 4px 0 0;">Unassigned</p>
+            </td>
+            <td style="width: 33%; text-align: center; padding: 12px; background: #fee2e2; border-radius: 0;">
+              <p style="font-size: 24px; font-weight: 700; color: #dc2626; margin: 0;">${escalated || 0}</p>
+              <p style="font-size: 11px; color: #991b1b; margin: 4px 0 0;">Escalated (3d+)</p>
+            </td>
+            <td style="width: 33%; text-align: center; padding: 12px; background: #dbeafe; border-radius: 0 12px 0 0;">
+              <p style="font-size: 24px; font-weight: 700; color: #2563eb; margin: 0;">${totalInProgress || 0}</p>
+              <p style="font-size: 11px; color: #1e40af; margin: 4px 0 0;">In Progress</p>
+            </td>
+          </tr>
+        </table>
+
+        ${unassigned?.length > 0 ? `
+        <div style="margin-bottom: 20px;">
+          <p style="font-size: 13px; font-weight: 600; color: #d97706; margin: 0 0 8px;">⚠️ Unassigned Jobs (${unassigned.length})</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; background: #fffbeb; border-radius: 8px; padding: 8px;">
+            <thead><tr style="border-bottom: 2px solid #fde68a;">
+              <th style="text-align: left; padding: 4px; color: #92400e; font-size: 11px;">ID</th>
+              <th style="text-align: left; padding: 4px; color: #92400e; font-size: 11px;">Title</th>
+              <th style="text-align: left; padding: 4px; color: #92400e; font-size: 11px;">Assigned</th>
+            </tr></thead>
+            <tbody>${renderRequests(unassigned)}</tbody>
+          </table>
+        </div>` : ''}
+
+        ${overdue?.length > 0 ? `
+        <div style="margin-bottom: 20px;">
+          <p style="font-size: 13px; font-weight: 600; color: #dc2626; margin: 0 0 8px;">🔴 Overdue (${overdue.length})</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; background: #fef2f2; border-radius: 8px; padding: 8px;">
+            <thead><tr style="border-bottom: 2px solid #fecaca;">
+              <th style="text-align: left; padding: 4px; color: #991b1b; font-size: 11px;">ID</th>
+              <th style="text-align: left; padding: 4px; color: #991b1b; font-size: 11px;">Title</th>
+              <th style="text-align: left; padding: 4px; color: #991b1b; font-size: 11px;">Assigned</th>
+            </tr></thead>
+            <tbody>${renderRequests(overdue)}</tbody>
+          </table>
+        </div>` : ''}
+
+        ${dueToday?.length > 0 ? `
+        <div style="margin-bottom: 20px;">
+          <p style="font-size: 13px; font-weight: 600; color: #2563eb; margin: 0 0 8px;">📅 Due Today (${dueToday.length})</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; background: #eff6ff; border-radius: 8px; padding: 8px;">
+            <thead><tr style="border-bottom: 2px solid #bfdbfe;">
+              <th style="text-align: left; padding: 4px; color: #1e40af; font-size: 11px;">ID</th>
+              <th style="text-align: left; padding: 4px; color: #1e40af; font-size: 11px;">Title</th>
+              <th style="text-align: left; padding: 4px; color: #1e40af; font-size: 11px;">Assigned</th>
+            </tr></thead>
+            <tbody>${renderRequests(dueToday)}</tbody>
+          </table>
+        </div>` : ''}
+
+        ${(unassigned?.length || 0) === 0 && (overdue?.length || 0) === 0 && (dueToday?.length || 0) === 0 ? `
+        <div style="text-align: center; padding: 24px; background: #f0fdf4; border-radius: 12px;">
+          <p style="font-size: 28px; margin: 0;">✅</p>
+          <p style="font-size: 14px; color: #166534; font-weight: 600; margin: 8px 0 0;">All clear! No action items today.</p>
+        </div>` : ''}
+
+        <div style="margin-top: 20px; text-align: center;">
+          <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">Open Dashboard</a>
         </div>
       </div>
     </div>

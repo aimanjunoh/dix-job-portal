@@ -230,7 +230,33 @@ export const api = {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      return { stats, recentRequests: recent, unassignedRequests: unassignedRequests || [] };
+      const now = new Date();
+      const unassignedWithDays = (unassignedRequests || []).map((r: any) => {
+        const created = new Date(r.created_at);
+        const daysUnassigned = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+        return { ...r, days_unassigned: daysUnassigned };
+      });
+
+      // Get project stats
+      const { data: allProjects } = await supabase.from('projects').select('id, project_id, title, status, progress, start_date, due_date, created_at');
+      const projects = allProjects || [];
+      const projectStats = {
+        total: projects.length,
+        active: projects.filter((p: any) => p.status === 'Active').length,
+        planning: projects.filter((p: any) => p.status === 'Planning').length,
+        completed: projects.filter((p: any) => p.status === 'Completed').length,
+      };
+
+      return {
+        stats: {
+          ...stats,
+          escalated: unassignedWithDays.filter((r: any) => r.days_unassigned >= 3).length,
+        },
+        recentRequests: recent,
+        unassignedRequests: unassignedWithDays,
+        projectStats,
+        recentProjects: projects.slice(0, 5),
+      };
     },
 
     get: async (id: number) => {
@@ -423,6 +449,27 @@ export const api = {
       }
 
       await logActivity(id, 'Request Updated', user?.email || 'System', 'Request details updated');
+      return { request: data };
+    },
+
+    claim: async (id: number) => {
+      const { data: existing } = await supabase.from('requests').select('*').eq('id', id).single();
+      if (!existing) throw new Error('Request not found');
+      if (existing.assigned_to) throw new Error('This request is already assigned');
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('requests')
+        .update({ assigned_to: user.id, status: 'In Progress' })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+
+      await logActivity(id, 'Request Claimed', user.email || 'System', `Self-assigned by ${user.email}`);
+
       return { request: data };
     },
 

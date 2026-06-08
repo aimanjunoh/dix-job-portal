@@ -11,7 +11,7 @@ const STATUSES = ['New', 'In Progress', 'Pending Info', 'Completed'];
 const URGENCIES = ['Normal', 'Urgent', 'Critical'];
 
 export default function Requests() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isGuest } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [requests, setRequests] = useState<any[]>([]);
@@ -116,9 +116,11 @@ export default function Requests() {
           <h1 className="text-2xl lg:text-3xl font-bold text-white">Job Requests</h1>
           <p className="text-white/70">{total} total requests</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-white text-primary-600 rounded-xl font-medium hover:shadow-lg transition-all text-sm">
-          <Plus size={16} /> New Request
-        </button>
+        {isAdmin && (
+          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-white text-primary-600 rounded-xl font-medium hover:shadow-lg transition-all text-sm">
+            <Plus size={16} /> New Request
+          </button>
+        )}
       </div>
 
       {/* Search, Filter, Toggle */}
@@ -191,7 +193,7 @@ export default function Requests() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => navigate(`/requests/${req.id}`)} className="p-2 hover:bg-green-50 text-green-500 rounded-lg"><Eye size={14} /></button>
-                        <button onClick={() => openEdit(req)} className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg"><Edit2 size={14} /></button>
+                        {!isGuest && <button onClick={() => openEdit(req)} className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg"><Edit2 size={14} /></button>}
                         {isAdmin && <button onClick={() => setDeleteConfirm(req.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={14} /></button>}
                       </div>
                     </td>
