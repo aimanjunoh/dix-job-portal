@@ -28,7 +28,7 @@ interface SlaStats {
 }
 
 export default function Dashboard() {
-  const { isAdmin, isGuest } = useAuth();
+  const { isAdmin, isGuest, profile } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<Stats>({ total: 0, unassigned: 0, escalated: 0, inProgress: 0, pendingInfo: 0, completed: 0, new: 0 });
   const [recentRequests, setRecentRequests] = useState<any[]>([]);
@@ -104,8 +104,8 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">Dashboard</h1>
-        <p className="text-white/70">Welcome back! Here's your overview.</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">Welcome, {profile?.name || 'User'}</h1>
+        <p className="text-white/70 capitalize">{profile?.role || ''} · Here's your overview.</p>
       </div>
 
       {/* Stat cards */}
