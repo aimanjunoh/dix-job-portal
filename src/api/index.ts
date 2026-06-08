@@ -104,20 +104,28 @@ function calculateProjectProgress(tasks: any[], milestones: any[]): number {
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter(t => t.status === 'Done').length;
   const totalMilestones = milestones.length;
-  const doneMilestones = milestones.filter(m => m.completed).length;
 
   if (totalTasks === 0 && totalMilestones === 0) return 0;
 
+  // If milestones have weights, use weight-based progress
+  const hasWeights = milestones.some(m => m.weight && m.weight > 0);
+  if (hasWeights && totalMilestones > 0) {
+    const completedWeight = milestones
+      .filter(m => m.completed)
+      .reduce((sum, m) => sum + (m.weight || 0), 0);
+    return Math.min(100, completedWeight);
+  }
+
+  // Fallback: no weights — use simple count-based
+  const doneMilestones = milestones.filter(m => m.completed).length;
   const taskPercent = totalTasks > 0 ? (doneTasks / totalTasks) * 100 : 0;
   const milestonePercent = totalMilestones > 0 ? (doneMilestones / totalMilestones) * 100 : 0;
 
   if (totalMilestones > 0) {
-    // Weighted: 50% milestones + 50% tasks
     return Math.round(milestonePercent * 0.5 + taskPercent * 0.5);
   }
 
-  // Tasks only: if all done, cap at 95% unless explicitly marked complete
-  // This prevents 100% when tasks are all done but project may have more scope
+  // Tasks only: if all done, cap at 95%
   if (totalTasks > 0 && doneTasks === totalTasks) return 95;
   return Math.round(taskPercent);
 }
@@ -417,7 +425,7 @@ export const api = {
       // Enrich recent projects with health + computed progress
       const recentProjectsEnriched = await Promise.all(projects.slice(0, 5).map(async (p: any) => {
         const { data: pTasks } = await supabase.from('project_tasks').select('status').eq('project_id', p.id);
-        const { data: pMilestones } = await supabase.from('project_milestones').select('completed').eq('project_id', p.id);
+        const { data: pMilestones } = await supabase.from('project_milestones').select('completed, weight').eq('project_id', p.id);
         const computedProgress = calculateProjectProgress(pTasks || [], pMilestones || []);
         const health = calculateProjectHealth({ ...p, progress: computedProgress }, pTasks || [], pMilestones || []);
         return { ...p, progress: computedProgress, health };
@@ -763,7 +771,7 @@ export const api = {
       // Get member counts & compute health + progress per project
       const projects = await Promise.all((data || []).map(async (p: any) => {
         const { data: pTasks } = await supabase.from('project_tasks').select('status').eq('project_id', p.id);
-        const { data: pMilestones } = await supabase.from('project_milestones').select('completed').eq('project_id', p.id);
+        const { data: pMilestones } = await supabase.from('project_milestones').select('completed, weight').eq('project_id', p.id);
         const tasksArr = pTasks || [];
         const msArr = pMilestones || [];
         const computedProgress = calculateProjectProgress(tasksArr, msArr);
@@ -835,6 +843,18 @@ export const api = {
         await supabase.from('project_members').insert(memberInserts);
       }
 
+      // Create default 5-phase milestones with preset weights
+      const defaultPhases = [
+        { title: 'Phase 1 — Planning', weight: 10, sort_order: 1 },
+        { title: 'Phase 2 — Design', weight: 20, sort_order: 2 },
+        { title: 'Phase 3 — Development', weight: 30, sort_order: 3 },
+        { title: 'Phase 4 — Testing', weight: 20, sort_order: 4 },
+        { title: 'Phase 5 — Deployment', weight: 20, sort_order: 5 },
+      ];
+      await supabase.from('project_milestones').insert(
+        defaultPhases.map(p => ({ project_id: project.id, ...p }))
+      );
+
       await logActivity(null, 'Project Created', user?.email || 'System', `Project ${project_id}: ${data.title}`);
       return { project };
     },
@@ -870,14 +890,22 @@ export const api = {
     // Milestones
     addMilestone: async (projectId: number, data: any) => {
       const { data: milestone, error } = await supabase.from('project_milestones').insert({
-        project_id: projectId, title: data.title, description: data.description || '', due_date: data.due_date || null, sort_order: data.sort_order || 0,
+        project_id: projectId, title: data.title, description: data.description || '', due_date: data.due_date || null,
+        sort_order: data.sort_order || 0, weight: data.weight ?? 0,
       }).select().single();
       if (error) throw error;
       return { milestone };
     },
 
     updateMilestone: async (id: number, data: any) => {
-      const { data: milestone, error } = await supabase.from('project_milestones').update(data).eq('id', id).select().single();
+      const updateData: any = {};
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.due_date !== undefined) updateData.due_date = data.due_date || null;
+      if (data.completed !== undefined) updateData.completed = data.completed;
+      if (data.weight !== undefined) updateData.weight = data.weight;
+      if (data.sort_order !== undefined) updateData.sort_order = data.sort_order;
+      const { data: milestone, error } = await supabase.from('project_milestones').update(updateData).eq('id', id).select().single();
       if (error) throw error;
       return { milestone };
     },

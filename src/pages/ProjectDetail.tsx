@@ -33,9 +33,10 @@ export default function ProjectDetail() {
 
   // Forms
   const [editForm, setEditForm] = useState<any>({});
-  const [milestoneForm, setMilestoneForm] = useState({ title: '', description: '', due_date: '' });
+  const [milestoneForm, setMilestoneForm] = useState({ title: '', description: '', due_date: '', weight: '' });
   const [taskForm, setTaskForm] = useState({ title: '', description: '', milestone_id: '', assigned_to: '', status: 'Todo', priority: 'Normal', due_date: '' });
   const [newMemberId, setNewMemberId] = useState('');
+  const [editingMilestone, setEditingMilestone] = useState<any>(null);
 
   useEffect(() => { loadProject(); api.users.all().then(d => setStaffList(d.users)).catch(() => {}); }, [id]);
 
@@ -77,17 +78,51 @@ export default function ProjectDetail() {
   const handleAddMilestone = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      await api.projects.addMilestone(Number(id), milestoneForm);
+      const data = { ...milestoneForm, weight: Number(milestoneForm.weight) || 0 };
+      await api.projects.addMilestone(Number(id), data);
       toast.success('Milestone added');
       setMilestoneOpen(false);
-      setMilestoneForm({ title: '', description: '', due_date: '' });
+      setMilestoneForm({ title: '', description: '', due_date: '', weight: '' });
       loadProject();
     } catch (err: any) { toast.error(err.message); }
   };
 
   const toggleMilestone = async (ms: any) => {
     try {
-      await api.projects.updateMilestone(ms.id, { completed: !ms.completed });
+      const newCompleted = !ms.completed;
+      await api.projects.updateMilestone(ms.id, { completed: newCompleted });
+      // Recalculate progress based on milestone weights
+      const updatedMilestones = milestones.map(m => m.id === ms.id ? { ...m, completed: newCompleted } : m);
+      const hasWeights = updatedMilestones.some(m => m.weight && m.weight > 0);
+      let progress = 0;
+      if (hasWeights) {
+        progress = updatedMilestones.filter(m => m.completed).reduce((sum, m) => sum + (m.weight || 0), 0);
+        progress = Math.min(100, progress);
+      } else {
+        // Fallback to old logic
+        const doneMs = updatedMilestones.filter(m => m.completed).length;
+        const doneTasks = tasks.filter(t => t.status === 'Done').length;
+        if (updatedMilestones.length > 0) {
+          const msPct = (doneMs / updatedMilestones.length) * 100;
+          const taskPct = tasks.length > 0 ? (doneTasks / tasks.length) * 100 : 0;
+          progress = Math.round(msPct * 0.5 + taskPct * 0.5);
+        }
+      }
+      await api.projects.update(Number(id), { progress });
+      loadProject();
+    } catch (err: any) { toast.error(err.message); }
+  };
+
+  const handleEditMilestone = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!editingMilestone) return;
+    try {
+      await api.projects.updateMilestone(editingMilestone.id, {
+        title: editingMilestone.title,
+        weight: Number(editingMilestone.weight) || 0,
+      });
+      toast.success('Milestone updated');
+      setEditingMilestone(null);
       loadProject();
     } catch (err: any) { toast.error(err.message); }
   };
@@ -115,26 +150,19 @@ export default function ProjectDetail() {
   const updateTaskStatus = async (taskId: number, status: string) => {
     try {
       await api.projects.updateTask(taskId, { status });
-      // Auto-calculate progress using weighted formula (milestones + tasks)
-      const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status } : t);
-      const doneTasks = updatedTasks.filter(t => t.status === 'Done').length;
-      const totalTasksCount = updatedTasks.length;
-      const doneMilestones = milestones.filter(m => m.completed).length;
-      const totalMilestonesCount = milestones.length;
-
+      // Recalculate progress using milestone weights if available
+      const hasWeights = milestones.some(m => m.weight && m.weight > 0);
       let progress = 0;
-      if (totalTasksCount === 0 && totalMilestonesCount === 0) {
-        progress = 0;
-      } else if (totalMilestonesCount > 0) {
-        const taskPct = totalTasksCount > 0 ? (doneTasks / totalTasksCount) * 100 : 0;
-        const msPct = (doneMilestones / totalMilestonesCount) * 100;
-        progress = Math.round(msPct * 0.5 + taskPct * 0.5);
+      if (hasWeights) {
+        progress = milestones.filter(m => m.completed).reduce((sum, m) => sum + (m.weight || 0), 0);
+        progress = Math.min(100, progress);
       } else {
-        // Tasks only: cap at 95% when all done
-        if (doneTasks === totalTasksCount) progress = 95;
-        else progress = Math.round((doneTasks / totalTasksCount) * 100);
+        const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status } : t);
+        const doneTasks = updatedTasks.filter(t => t.status === 'Done').length;
+        const totalTasksCount = updatedTasks.length;
+        if (totalTasksCount > 0 && doneTasks === totalTasksCount) progress = 95;
+        else if (totalTasksCount > 0) progress = Math.round((doneTasks / totalTasksCount) * 100);
       }
-
       await api.projects.update(Number(id), { progress });
       loadProject();
     } catch (err: any) { toast.error(err.message); }
@@ -271,8 +299,27 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      {tab === 'Milestones' && (
+      {tab === 'Milestones' && (() => {
+        const totalWeight = milestones.reduce((sum, m) => sum + (m.weight || 0), 0);
+        const completedWeight = milestones.filter(m => m.completed).reduce((sum, m) => sum + (m.weight || 0), 0);
+        return (
         <div className="space-y-4">
+          {/* Weight Summary */}
+          {milestones.length > 0 && milestones.some(m => m.weight > 0) && (
+            <div className="glass p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">Milestone Weight Total</span>
+                <span className={`text-sm font-bold ${totalWeight === 100 ? 'text-green-600' : 'text-red-500'}`}>{totalWeight}% / 100%</span>
+              </div>
+              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${totalWeight === 100 ? 'bg-green-500' : totalWeight > 100 ? 'bg-red-500' : 'bg-amber-500'}`} style={{ width: `${Math.min(100, totalWeight)}%` }} />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Completed: {completedWeight}% of {totalWeight}%</p>
+              {totalWeight !== 100 && (
+                <p className="text-xs text-red-500 mt-1 font-medium">⚠ Total weight must equal 100%. Adjust milestone weights.</p>
+              )}
+            </div>
+          )}
           <div className="flex justify-end">
             <button onClick={() => setMilestoneOpen(true)} className="flex items-center gap-1.5 px-3 py-2 bg-white text-primary-600 rounded-xl text-sm font-medium hover:shadow-lg"><Plus size={14} /> Add Milestone</button>
           </div>
@@ -290,7 +337,12 @@ export default function ProjectDetail() {
                         {ms.completed && <Check size={12} />}
                       </button>
                       <div>
-                        <h3 className={`font-medium text-gray-800 ${ms.completed ? 'line-through' : ''}`}>{ms.title}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className={`font-medium text-gray-800 ${ms.completed ? 'line-through' : ''}`}>{ms.title}</h3>
+                          {ms.weight > 0 && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ms.completed ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{ms.weight}%</span>
+                          )}
+                        </div>
                         {ms.description && <p className="text-sm text-gray-500 mt-0.5">{ms.description}</p>}
                         <div className="flex gap-3 mt-2 text-xs text-gray-400">
                           {ms.due_date && <span>Due: {ms.due_date}</span>}
@@ -298,14 +350,18 @@ export default function ProjectDetail() {
                         </div>
                       </div>
                     </div>
-                    <button onClick={() => deleteMilestone(ms.id)} className="p-1 text-red-400 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
+                    <div className="flex gap-1">
+                      <button onClick={() => setEditingMilestone({ id: ms.id, title: ms.title, weight: ms.weight || 0 })} className="p-1 text-blue-400 hover:bg-blue-50 rounded"><Edit2 size={14} /></button>
+                      <button onClick={() => deleteMilestone(ms.id)} className="p-1 text-red-400 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
+                    </div>
                   </div>
                 </div>
               );
             })
           )}
         </div>
-      )}
+        );
+      })()}
 
       {tab === 'Tasks' && (
         <div className="space-y-4">
@@ -391,9 +447,23 @@ export default function ProjectDetail() {
         <form onSubmit={handleAddMilestone} className="space-y-4">
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Title *</label><input type="text" value={milestoneForm.title} onChange={(e) => setMilestoneForm({ ...milestoneForm, title: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Description</label><input type="text" value={milestoneForm.description} onChange={(e) => setMilestoneForm({ ...milestoneForm, description: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label><input type="date" value={milestoneForm.due_date} onChange={(e) => setMilestoneForm({ ...milestoneForm, due_date: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label><input type="date" value={milestoneForm.due_date} onChange={(e) => setMilestoneForm({ ...milestoneForm, due_date: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 mb-1">Weight (%)</label><input type="number" min="0" max="100" value={milestoneForm.weight} onChange={(e) => setMilestoneForm({ ...milestoneForm, weight: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" placeholder="0" /></div>
+          </div>
           <div className="flex justify-end gap-3"><button type="button" onClick={() => setMilestoneOpen(false)} className="px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-100 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-700 text-white text-sm rounded-xl font-medium">Add</button></div>
         </form>
+      </Modal>
+
+      {/* Edit Milestone Modal */}
+      <Modal isOpen={editingMilestone !== null} onClose={() => setEditingMilestone(null)} title="Edit Milestone" size="sm">
+        {editingMilestone && (
+          <form onSubmit={handleEditMilestone} className="space-y-4">
+            <div><label className="block text-sm font-medium text-gray-700 mb-1">Phase Name</label><input type="text" value={editingMilestone.title} onChange={(e) => setEditingMilestone({ ...editingMilestone, title: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
+            <div><label className="block text-sm font-medium text-gray-700 mb-1">Weight (%)</label><input type="number" min="0" max="100" value={editingMilestone.weight} onChange={(e) => setEditingMilestone({ ...editingMilestone, weight: Number(e.target.value) || 0 })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
+            <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditingMilestone(null)} className="px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-100 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-700 text-white text-sm rounded-xl font-medium">Save</button></div>
+          </form>
+        )}
       </Modal>
 
       {/* Add Task Modal */}
