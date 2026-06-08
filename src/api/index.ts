@@ -965,4 +965,64 @@ export const api = {
       return { message: 'Note deleted' };
     },
   },
+
+  insights: {
+    fetchAll: async () => {
+      const [
+        { data: allRequests },
+        { data: allProjects },
+        { data: allUsers },
+        { data: allTasks },
+        { data: allMilestones },
+      ] = await Promise.all([
+        supabase.from('requests').select('*, users!assigned_to(name)').order('created_at'),
+        supabase.from('projects').select('*, users!owner_id(name)'),
+        supabase.from('users').select('id, name, email, role, department').eq('status', 'active'),
+        supabase.from('project_tasks').select('project_id, status, assigned_to'),
+        supabase.from('project_milestones').select('project_id, completed, weight'),
+      ]);
+
+      // Group tasks/milestones by project_id
+      const tasksByProject = new Map<number, any[]>();
+      (allTasks || []).forEach((t: any) => {
+        const arr = tasksByProject.get(t.project_id) || [];
+        arr.push(t);
+        tasksByProject.set(t.project_id, arr);
+      });
+      const msByProject = new Map<number, any[]>();
+      (allMilestones || []).forEach((m: any) => {
+        const arr = msByProject.get(m.project_id) || [];
+        arr.push(m);
+        msByProject.set(m.project_id, arr);
+      });
+
+      // Enrich requests with dynamic SLA status
+      const now = new Date();
+      const requests = (allRequests || []).map((r: any) => {
+        const slaStatus = r.sla_due_date
+          ? calculateSlaStatus(r.sla_due_date, r.status, r.sla_paused_at || null)
+          : 'Within SLA';
+        const created = new Date(r.created_at);
+        const daysUnassigned = r.assigned_to ? 0 : Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+        return {
+          ...r,
+          assigned_name: r.users?.name || null,
+          sla_status: slaStatus,
+          days_unassigned: daysUnassigned,
+          users: undefined,
+        };
+      });
+
+      // Enrich projects with health + progress
+      const projects = (allProjects || []).map((p: any) => {
+        const tasks = tasksByProject.get(p.id) || [];
+        const ms = msByProject.get(p.id) || [];
+        const progress = calculateProjectProgress(tasks, ms);
+        const health = calculateProjectHealth({ ...p, progress }, tasks, ms);
+        return { ...p, owner_name: p.users?.name || null, progress, health, users: undefined };
+      });
+
+      return { requests, projects, users: allUsers || [] };
+    },
+  },
 };

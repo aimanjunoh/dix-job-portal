@@ -1,11 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, Users, ClipboardList, Activity, LogOut, Shield, X, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardList, Activity, LogOut, Shield, X, FolderOpen, BarChart3 } from 'lucide-react';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/requests', icon: ClipboardList, label: 'Job Requests' },
   { to: '/projects', icon: FolderOpen, label: 'Projects' },
+  { to: '/insights', icon: BarChart3, label: 'Insights' },
   { to: '/users', icon: Users, label: 'User Management', adminOnly: true },
   { to: '/activities', icon: Activity, label: 'Activity Logs' },
 ];
