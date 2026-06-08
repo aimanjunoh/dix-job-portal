@@ -15,6 +15,13 @@ const STATUS_COLORS: Record<string, string> = {
   Cancelled: 'bg-red-100 text-red-700',
 };
 
+const HEALTH_COLORS: Record<string, string> = {
+  'On Track': 'bg-green-100 text-green-700',
+  'At Risk': 'bg-amber-100 text-amber-700',
+  'Delayed': 'bg-red-100 text-red-700',
+  'Completed': 'bg-blue-100 text-blue-700',
+};
+
 export default function Projects() {
   const { isAdmin, isGuest, profile } = useAuth();
   const navigate = useNavigate();
@@ -135,6 +142,11 @@ export default function Projects() {
                 </div>
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[project.status] || ''}`}>{project.status}</span>
               </div>
+              {project.health && (
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium mb-2 inline-block ${HEALTH_COLORS[project.health] || 'bg-gray-100 text-gray-600'}`}>
+                  {project.health}
+                </span>
+              )}
               <p className="text-sm text-gray-500 line-clamp-2 mb-3">{project.description || 'No description'}</p>
               <div className="flex items-center justify-between text-xs text-gray-400">
                 <span>Owner: {project.owner_name || 'Unassigned'}</span>

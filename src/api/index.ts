@@ -1,5 +1,128 @@
 import { supabase } from '../lib/supabase';
 
+// --- SLA Helpers ---
+const SLA_WORKING_DAYS: Record<string, number> = {
+  Normal: 3,
+  Urgent: 2,
+  Critical: 0, // same working day
+};
+
+const PAUSED_STATUSES = ['Pending Info', 'Pending Content', 'Pending Approval'];
+
+function isWeekend(d: Date): boolean {
+  const day = d.getDay();
+  return day === 0 || day === 6;
+}
+
+function addWorkingDays(start: Date, days: number): Date {
+  const result = new Date(start);
+  if (days === 0) return result; // same day for Critical
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    if (!isWeekend(result)) added++;
+  }
+  return result;
+}
+
+function workingDaysBetween(start: Date, end: Date): number {
+  let count = 0;
+  const current = new Date(start);
+  while (current < end) {
+    current.setDate(current.getDate() + 1);
+    if (!isWeekend(current)) count++;
+  }
+  return count;
+}
+
+function calculateSlaDueDate(createdAt: string, urgency: string, pausedDays: number = 0): string {
+  const created = new Date(createdAt);
+  const slaDays = SLA_WORKING_DAYS[urgency] ?? 3;
+  // Start counting from creation date, add paused days offset
+  const effectiveStart = new Date(created);
+  // Add back paused days as working days to shift the start forward
+  let shiftedStart = effectiveStart;
+  if (pausedDays > 0) {
+    shiftedStart = addWorkingDays(effectiveStart, pausedDays);
+  }
+  const dueDate = addWorkingDays(shiftedStart, slaDays);
+  return dueDate.toISOString().split('T')[0];
+}
+
+function calculateSlaStatus(slaDueDate: string | null, status: string, pausedAt: string | null): string {
+  if (PAUSED_STATUSES.includes(status) || pausedAt) return 'Paused';
+  if (status === 'Completed') return 'Within SLA';
+  if (!slaDueDate) return 'Within SLA';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(slaDueDate);
+  const diffDays = workingDaysBetween(today, due);
+  const diffNegative = workingDaysBetween(due, today);
+
+  if (today > due && diffNegative > 0) return 'Overdue';
+  if (diffDays <= 1 && diffDays >= 0) return 'Approaching SLA';
+  return 'Within SLA';
+}
+
+// --- Existing helpers ---
+
+// --- Project Health & Progress ---
+function calculateProjectHealth(project: any, tasks: any[] = [], milestones: any[] = []): string {
+  if (project.status === 'Completed') return 'Completed';
+  if (project.status === 'Cancelled') return 'Delayed';
+
+  // Check if overdue
+  if (project.due_date) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(project.due_date);
+    if (today > due) return 'Delayed';
+  }
+
+  // Check timeline vs progress
+  if (project.start_date && project.due_date) {
+    const start = new Date(project.start_date);
+    const due = new Date(project.due_date);
+    const today = new Date();
+    const totalDays = (due.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+    const elapsedDays = (today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (totalDays > 0) {
+      const timelinePercent = Math.min(100, Math.max(0, (elapsedDays / totalDays) * 100));
+      const progress = project.progress || 0;
+
+      // At Risk: >80% timeline consumed but <50% progress
+      if (timelinePercent > 80 && progress < 50) return 'At Risk';
+    }
+  }
+
+  return 'On Track';
+}
+
+function calculateProjectProgress(tasks: any[], milestones: any[]): number {
+  const totalTasks = tasks.length;
+  const doneTasks = tasks.filter(t => t.status === 'Done').length;
+  const totalMilestones = milestones.length;
+  const doneMilestones = milestones.filter(m => m.completed).length;
+
+  if (totalTasks === 0 && totalMilestones === 0) return 0;
+
+  const taskPercent = totalTasks > 0 ? (doneTasks / totalTasks) * 100 : 0;
+  const milestonePercent = totalMilestones > 0 ? (doneMilestones / totalMilestones) * 100 : 0;
+
+  if (totalMilestones > 0) {
+    // Weighted: 50% milestones + 50% tasks
+    return Math.round(milestonePercent * 0.5 + taskPercent * 0.5);
+  }
+
+  // Tasks only: if all done, cap at 95% unless explicitly marked complete
+  // This prevents 100% when tasks are all done but project may have more scope
+  if (totalTasks > 0 && doneTasks === totalTasks) return 95;
+  return Math.round(taskPercent);
+}
+
+// --- Existing helpers ---
 // Generate unique action token
 function generateToken(): string {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -185,15 +308,42 @@ export const api = {
       if (params.unassigned === 'true') {
         query = query.is('assigned_to', null);
       }
+      if (params.slaStatus) {
+        query = query.eq('sla_status', params.slaStatus);
+      }
 
       const { data, count, error } = await query.range(from, to);
       if (error) throw error;
 
-      const requests = (data || []).map((r: any) => ({
-        ...r,
-        assigned_name: r.users?.name || null,
-        users: undefined,
-      }));
+      const requests = (data || []).map((r: any) => {
+        // Recalculate SLA status dynamically for accuracy
+        const slaStatus = r.sla_due_date
+          ? calculateSlaStatus(r.sla_due_date, r.status, r.sla_paused_at || null)
+          : r.sla_status || 'Within SLA';
+
+        // Calculate days remaining or overdue
+        let daysRemaining = null;
+        let overdueDays = null;
+        if (r.sla_due_date && r.status !== 'Completed') {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const due = new Date(r.sla_due_date);
+          if (today <= due) {
+            daysRemaining = workingDaysBetween(today, due);
+          } else {
+            overdueDays = workingDaysBetween(due, today);
+          }
+        }
+
+        return {
+          ...r,
+          assigned_name: r.users?.name || null,
+          sla_status: slaStatus,
+          sla_days_remaining: daysRemaining,
+          sla_overdue_days: overdueDays,
+          users: undefined,
+        };
+      });
 
       return { requests, total: count || 0, page, limit };
     },
@@ -210,6 +360,23 @@ export const api = {
         completed: requests.filter(r => r.status === 'Completed').length,
         new: requests.filter(r => r.status === 'New').length,
       };
+
+      // SLA stats — compute dynamically
+      const activeRequests = requests.filter(r => r.status !== 'Completed');
+      const slaCounts = { withinSLA: 0, approachingSLA: 0, overdueSLA: 0, paused: 0 };
+      for (const r of activeRequests) {
+        const slaSt = r.sla_due_date
+          ? calculateSlaStatus(r.sla_due_date, r.status, r.sla_paused_at || null)
+          : 'Within SLA';
+        if (slaSt === 'Overdue') slaCounts.overdueSLA++;
+        else if (slaSt === 'Approaching SLA') slaCounts.approachingSLA++;
+        else if (slaSt === 'Paused') slaCounts.paused++;
+        else slaCounts.withinSLA++;
+      }
+      const totalActive = activeRequests.length;
+      const slaCompliance = totalActive > 0
+        ? Math.round(((totalActive - slaCounts.overdueSLA) / totalActive) * 100)
+        : 100;
 
       const { data: recentRequests } = await supabase
         .from('requests')
@@ -247,15 +414,31 @@ export const api = {
         completed: projects.filter((p: any) => p.status === 'Completed').length,
       };
 
+      // Enrich recent projects with health + computed progress
+      const recentProjectsEnriched = await Promise.all(projects.slice(0, 5).map(async (p: any) => {
+        const { data: pTasks } = await supabase.from('project_tasks').select('status').eq('project_id', p.id);
+        const { data: pMilestones } = await supabase.from('project_milestones').select('completed').eq('project_id', p.id);
+        const computedProgress = calculateProjectProgress(pTasks || [], pMilestones || []);
+        const health = calculateProjectHealth({ ...p, progress: computedProgress }, pTasks || [], pMilestones || []);
+        return { ...p, progress: computedProgress, health };
+      }));
+
       return {
         stats: {
           ...stats,
           escalated: unassignedWithDays.filter((r: any) => r.days_unassigned >= 3).length,
         },
+        slaStats: {
+          withinSLA: slaCounts.withinSLA,
+          approachingSLA: slaCounts.approachingSLA,
+          overdueSLA: slaCounts.overdueSLA,
+          paused: slaCounts.paused,
+          compliance: slaCompliance,
+        },
         recentRequests: recent,
         unassignedRequests: unassignedWithDays,
         projectStats,
-        recentProjects: projects.slice(0, 5),
+        recentProjects: recentProjectsEnriched,
       };
     },
 
@@ -282,6 +465,9 @@ export const api = {
     create: async (requestData: any) => {
       const request_id = await generateRequestId();
       const action_token = generateToken();
+      const now = new Date().toISOString();
+      const urgency = requestData.urgency || 'Normal';
+      const slaDueDate = calculateSlaDueDate(now, urgency, 0);
 
       const { data, error } = await supabase.from('requests').insert({
         request_id,
@@ -290,13 +476,17 @@ export const api = {
         requester_email: requestData.requester_email || '',
         department: requestData.department || '',
         category: requestData.category || '',
-        urgency: requestData.urgency || 'Normal',
+        urgency,
         description: requestData.description || '',
         assigned_to: requestData.assigned_to || null,
         status: requestData.status || 'New',
         remarks: requestData.remarks || '',
         due_date: requestData.due_date || null,
         action_token,
+        sla_due_date: slaDueDate,
+        sla_status: 'Within SLA',
+        sla_paused_days: 0,
+        sla_paused_at: null,
       }).select().single();
       if (error) throw error;
 
@@ -367,6 +557,55 @@ export const api = {
       }
 
       if (requestData.due_date !== undefined) updateData.due_date = requestData.due_date || null;
+
+      // --- SLA Pause/Resume Logic ---
+      if (requestData.status !== undefined && requestData.status !== existing.status) {
+        const newStatus = requestData.status;
+        const oldStatus = existing.status;
+        const pausedDays = existing.sla_paused_days || 0;
+
+        if (PAUSED_STATUSES.includes(newStatus) && !existing.sla_paused_at) {
+          // Pause SLA: record when we paused
+          updateData.sla_paused_at = new Date().toISOString();
+          updateData.sla_status = 'Paused';
+          await logActivity(id, 'SLA Paused', 'System', `SLA paused — status changed to ${newStatus}`);
+        } else if (!PAUSED_STATUSES.includes(newStatus) && existing.sla_paused_at) {
+          // Resume SLA: calculate paused working days and shift due date
+          const pausedAt = new Date(existing.sla_paused_at);
+          const resumeAt = new Date();
+          const pauseDuration = workingDaysBetween(pausedAt, resumeAt);
+          const newPausedDays = pausedDays + pauseDuration;
+          const urgency = requestData.urgency || existing.urgency || 'Normal';
+          const newSlaDue = calculateSlaDueDate(existing.created_at, urgency, newPausedDays);
+          const newSlaStatus = calculateSlaStatus(newSlaDue, newStatus, null);
+
+          updateData.sla_paused_at = null;
+          updateData.sla_paused_days = newPausedDays;
+          updateData.sla_due_date = newSlaDue;
+          updateData.sla_status = newSlaStatus;
+          await logActivity(id, 'SLA Resumed', 'System', `SLA resumed — ${pauseDuration} working day(s) paused`);
+        } else if (newStatus === 'Completed') {
+          // On completion, clear any active pause and set final status
+          if (existing.sla_paused_at) {
+            updateData.sla_paused_at = null;
+          }
+          updateData.sla_status = 'Within SLA'; // Completed within SLA
+        } else {
+          // Regular status change (not pause/resume) — recalculate SLA status
+          const urgency = requestData.urgency || existing.urgency || 'Normal';
+          const slaDue = calculateSlaDueDate(existing.created_at, urgency, pausedDays);
+          updateData.sla_due_date = slaDue;
+          updateData.sla_status = calculateSlaStatus(slaDue, newStatus, existing.sla_paused_at || null);
+        }
+      }
+
+      // Recalculate SLA if urgency changed
+      if (requestData.urgency !== undefined && requestData.urgency !== existing.urgency && !updateData.sla_due_date) {
+        const pausedDays = existing.sla_paused_days || 0;
+        const newSlaDue = calculateSlaDueDate(existing.created_at, requestData.urgency, pausedDays);
+        updateData.sla_due_date = newSlaDue;
+        updateData.sla_status = calculateSlaStatus(newSlaDue, existing.status, existing.sla_paused_at || null);
+      }
 
       const { data, error } = await supabase.from('requests').update(updateData).eq('id', id).select().single();
       if (error) throw error;
@@ -521,11 +760,21 @@ export const api = {
       const { data, count, error } = await query;
       if (error) throw error;
 
-      // Get member counts
-      const projects = (data || []).map((p: any) => ({
-        ...p,
-        owner_name: p.users?.name || null,
-        users: undefined,
+      // Get member counts & compute health + progress per project
+      const projects = await Promise.all((data || []).map(async (p: any) => {
+        const { data: pTasks } = await supabase.from('project_tasks').select('status').eq('project_id', p.id);
+        const { data: pMilestones } = await supabase.from('project_milestones').select('completed').eq('project_id', p.id);
+        const tasksArr = pTasks || [];
+        const msArr = pMilestones || [];
+        const computedProgress = calculateProjectProgress(tasksArr, msArr);
+        const health = calculateProjectHealth({ ...p, progress: computedProgress }, tasksArr, msArr);
+        return {
+          ...p,
+          owner_name: p.users?.name || null,
+          health,
+          progress: computedProgress,
+          users: undefined,
+        };
       }));
 
       return { projects, total: count || 0 };
@@ -546,8 +795,12 @@ export const api = {
         supabase.from('project_notes').select('*, users(name)').eq('project_id', id).order('created_at', { ascending: false }),
       ]);
 
+      // Compute health and progress using tasks + milestones
+      const computedProgress = calculateProjectProgress(tasks || [], milestones || []);
+      const health = calculateProjectHealth({ ...project, progress: computedProgress }, tasks || [], milestones || []);
+
       return {
-        project: { ...project, owner_name: project?.users?.name || null, users: undefined },
+        project: { ...project, owner_name: project?.users?.name || null, health, progress: computedProgress, users: undefined },
         members: members || [],
         milestones: milestones || [],
         tasks: (tasks || []).map((t: any) => ({ ...t, assigned_name: t.users?.name || null, milestone_title: t.project_milestones?.title || null, users: undefined, project_milestones: undefined })),

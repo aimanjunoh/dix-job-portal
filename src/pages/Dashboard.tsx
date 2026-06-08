@@ -5,7 +5,8 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/shared/StatusBadge';
 import {
-  ClipboardList, UserCheck, Clock, AlertCircle, CheckCircle2, PlusCircle, Users, HandMetal, AlertTriangle, FolderOpen
+  ClipboardList, UserCheck, Clock, AlertCircle, CheckCircle2, PlusCircle, Users, HandMetal, AlertTriangle, FolderOpen,
+  ShieldCheck, Timer, ShieldAlert, TrendingUp
 } from 'lucide-react';
 
 interface Stats {
@@ -18,6 +19,14 @@ interface Stats {
   new: number;
 }
 
+interface SlaStats {
+  withinSLA: number;
+  approachingSLA: number;
+  overdueSLA: number;
+  paused: number;
+  compliance: number;
+}
+
 export default function Dashboard() {
   const { isAdmin, isGuest } = useAuth();
   const navigate = useNavigate();
@@ -27,6 +36,7 @@ export default function Dashboard() {
   const [staffList, setStaffList] = useState<any[]>([]);
   const [projectStats, setProjectStats] = useState({ total: 0, active: 0, planning: 0, completed: 0 });
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
+  const [slaStats, setSlaStats] = useState<SlaStats>({ withinSLA: 0, approachingSLA: 0, overdueSLA: 0, paused: 0, compliance: 100 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,6 +54,7 @@ export default function Dashboard() {
       setUnassignedRequests(dashData.unassignedRequests);
       setProjectStats(dashData.projectStats);
       setRecentProjects(dashData.recentProjects || []);
+      setSlaStats(dashData.slaStats || { withinSLA: 0, approachingSLA: 0, overdueSLA: 0, paused: 0, compliance: 100 });
       setStaffList(staffData.users);
     } catch (err) {
       console.error(err);
@@ -108,6 +119,43 @@ export default function Dashboard() {
             <p className="text-xs text-gray-500">{card.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* SLA Widgets */}
+      <div>
+        <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+          <ShieldCheck size={18} /> SLA Overview
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div onClick={() => navigate('/requests?slaStatus=Within+SLA')} className="glass-card p-4 text-center cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <ShieldCheck className="text-white" size={18} />
+            </div>
+            <p className="text-2xl font-bold text-green-600">{slaStats.withinSLA}</p>
+            <p className="text-xs text-gray-500">Within SLA</p>
+          </div>
+          <div onClick={() => navigate('/requests?slaStatus=Approaching+SLA')} className="glass-card p-4 text-center cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all">
+            <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <Timer className="text-white" size={18} />
+            </div>
+            <p className="text-2xl font-bold text-amber-600">{slaStats.approachingSLA}</p>
+            <p className="text-xs text-gray-500">Approaching SLA</p>
+          </div>
+          <div onClick={() => navigate('/requests?slaStatus=Overdue')} className="glass-card p-4 text-center cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all">
+            <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <ShieldAlert className="text-white" size={18} />
+            </div>
+            <p className="text-2xl font-bold text-red-600">{slaStats.overdueSLA}</p>
+            <p className="text-xs text-gray-500">Overdue</p>
+          </div>
+          <div onClick={() => navigate('/requests')} className="glass-card p-4 text-center cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <TrendingUp className="text-white" size={18} />
+            </div>
+            <p className="text-2xl font-bold text-blue-600">{slaStats.compliance}%</p>
+            <p className="text-xs text-gray-500">SLA Compliance</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -256,6 +304,14 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2">
                         <p className="text-xs text-gray-500 font-mono">{p.project_id}</p>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[p.status] || 'bg-gray-100 text-gray-700'}`}>{p.status}</span>
+                        {p.health && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            p.health === 'On Track' ? 'bg-green-100 text-green-700' :
+                            p.health === 'At Risk' ? 'bg-amber-100 text-amber-700' :
+                            p.health === 'Delayed' ? 'bg-red-100 text-red-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>{p.health}</span>
+                        )}
                       </div>
                       <p className="text-sm font-medium text-gray-800 truncate">{p.title}</p>
                       <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">

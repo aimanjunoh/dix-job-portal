@@ -21,6 +21,7 @@ export default function Requests() {
   const [statusFilter, setStatusFilter] = useState('');
   const [hideCompleted, setHideCompleted] = useState(false);
   const [unassignedOnly, setUnassignedOnly] = useState(false);
+  const [slaFilter, setSlaFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingReq, setEditingReq] = useState<any>(null);
@@ -36,11 +37,13 @@ export default function Requests() {
   useEffect(() => {
     const status = searchParams.get('status');
     const unassigned = searchParams.get('unassigned');
+    const slaStatus = searchParams.get('slaStatus');
     if (status) setStatusFilter(status);
     if (unassigned === 'true') setUnassignedOnly(true);
+    if (slaStatus) setSlaFilter(slaStatus);
   }, []);
 
-  useEffect(() => { loadRequests(); }, [page, search, statusFilter, hideCompleted, unassignedOnly]);
+  useEffect(() => { loadRequests(); }, [page, search, statusFilter, hideCompleted, unassignedOnly, slaFilter]);
   useEffect(() => { api.users.all().then(d => setStaffList(d.users)).catch(() => {}); }, []);
 
   const loadRequests = async () => {
@@ -51,6 +54,7 @@ export default function Requests() {
       if (statusFilter) params.status = statusFilter;
       if (hideCompleted) params.hideCompleted = 'true';
       if (unassignedOnly) params.unassigned = 'true';
+      if (slaFilter) params.slaStatus = slaFilter;
       const data = await api.requests.list(params);
       setRequests(data.requests);
       setTotal(data.total);
@@ -149,6 +153,14 @@ export default function Requests() {
               className="rounded border-gray-300 text-primary-500 focus:ring-primary-500" />
             Unassigned Only
           </label>
+          <select value={slaFilter} onChange={(e) => { setSlaFilter(e.target.value); setPage(1); }}
+            className="px-3 py-1.5 bg-white/60 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            <option value="">All SLA</option>
+            <option value="Within SLA">Within SLA</option>
+            <option value="Approaching SLA">Approaching SLA</option>
+            <option value="Overdue">Overdue</option>
+            <option value="Paused">Paused</option>
+          </select>
         </div>
       </div>
 
@@ -164,14 +176,15 @@ export default function Requests() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Assigned</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Urgency</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden xl:table-cell">SLA</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-500">Loading...</td></tr>
+                <tr><td colSpan={8} className="text-center py-8 text-gray-500">Loading...</td></tr>
               ) : requests.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-500">No requests found</td></tr>
+                <tr><td colSpan={8} className="text-center py-8 text-gray-500">No requests found</td></tr>
               ) : (
                 requests.map((req: any) => (
                   <tr key={req.id} className="border-b border-gray-100/50 hover:bg-white/30">
@@ -190,6 +203,26 @@ export default function Requests() {
                       }`}>{req.urgency}</span>
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={req.status} /></td>
+                    <td className="px-4 py-3 hidden xl:table-cell">
+                      {req.sla_status && req.status !== 'Completed' ? (
+                        <div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            req.sla_status === 'Within SLA' ? 'bg-green-100 text-green-700' :
+                            req.sla_status === 'Approaching SLA' ? 'bg-amber-100 text-amber-700' :
+                            req.sla_status === 'Overdue' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>{req.sla_status}</span>
+                          {req.sla_days_remaining !== null && req.sla_days_remaining !== undefined && (
+                            <p className="text-xs text-gray-400 mt-0.5">{req.sla_days_remaining}d left</p>
+                          )}
+                          {req.sla_overdue_days !== null && req.sla_overdue_days !== undefined && (
+                            <p className="text-xs text-red-500 mt-0.5">{req.sla_overdue_days}d overdue</p>
+                          )}
+                        </div>
+                      ) : req.status === 'Completed' ? (
+                        <span className="text-xs text-gray-400">—</span>
+                      ) : null}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => navigate(`/requests/${req.id}`)} className="p-2 hover:bg-green-50 text-green-500 rounded-lg"><Eye size={14} /></button>

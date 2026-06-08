@@ -115,10 +115,26 @@ export default function ProjectDetail() {
   const updateTaskStatus = async (taskId: number, status: string) => {
     try {
       await api.projects.updateTask(taskId, { status });
-      // Auto-calculate progress
+      // Auto-calculate progress using weighted formula (milestones + tasks)
       const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status } : t);
-      const doneCount = updatedTasks.filter(t => t.status === 'Done').length;
-      const progress = updatedTasks.length > 0 ? Math.round((doneCount / updatedTasks.length) * 100) : 0;
+      const doneTasks = updatedTasks.filter(t => t.status === 'Done').length;
+      const totalTasksCount = updatedTasks.length;
+      const doneMilestones = milestones.filter(m => m.completed).length;
+      const totalMilestonesCount = milestones.length;
+
+      let progress = 0;
+      if (totalTasksCount === 0 && totalMilestonesCount === 0) {
+        progress = 0;
+      } else if (totalMilestonesCount > 0) {
+        const taskPct = totalTasksCount > 0 ? (doneTasks / totalTasksCount) * 100 : 0;
+        const msPct = (doneMilestones / totalMilestonesCount) * 100;
+        progress = Math.round(msPct * 0.5 + taskPct * 0.5);
+      } else {
+        // Tasks only: cap at 95% when all done
+        if (doneTasks === totalTasksCount) progress = 95;
+        else progress = Math.round((doneTasks / totalTasksCount) * 100);
+      }
+
       await api.projects.update(Number(id), { progress });
       loadProject();
     } catch (err: any) { toast.error(err.message); }
@@ -192,7 +208,17 @@ export default function ProjectDetail() {
       {/* Progress & Stats */}
       <div className="glass p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-600">Overall Progress</span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600">Overall Progress</span>
+            {project.health && (
+              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                project.health === 'On Track' ? 'bg-green-100 text-green-700' :
+                project.health === 'At Risk' ? 'bg-amber-100 text-amber-700' :
+                project.health === 'Delayed' ? 'bg-red-100 text-red-700' :
+                'bg-blue-100 text-blue-700'
+              }`}>{project.health}</span>
+            )}
+          </div>
           <span className="text-sm font-bold text-gray-800">{project.progress}%</span>
         </div>
         <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
