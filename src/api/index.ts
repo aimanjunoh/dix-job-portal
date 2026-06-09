@@ -418,11 +418,18 @@ export const api = {
       // Get project stats
       const { data: allProjects } = await supabase.from('projects').select('id, project_id, title, status, progress, start_date, due_date, created_at');
       const projects = allProjects || [];
+      const now2 = new Date();
+      now2.setHours(0, 0, 0, 0);
       const projectStats = {
         total: projects.length,
         active: projects.filter((p: any) => p.status === 'Active').length,
         planning: projects.filter((p: any) => p.status === 'Planning').length,
         completed: projects.filter((p: any) => p.status === 'Completed').length,
+        delayed: projects.filter((p: any) => {
+          if (p.status === 'Completed' || p.status === 'Cancelled') return false;
+          if (p.due_date && new Date(p.due_date) < now2) return true;
+          return false;
+        }).length,
       };
 
       // Enrich recent projects with health + computed progress
