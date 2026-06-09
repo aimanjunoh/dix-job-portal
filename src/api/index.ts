@@ -401,6 +401,20 @@ export const api = {
         users: undefined,
       }));
 
+      // Duplicate detection: flag requests from the same email within 30 minutes
+      const DUPLICATE_WINDOW_MS = 30 * 60 * 1000;
+      const detectDuplicate = (req: any): string | null => {
+        if (!req.requester_email) return null;
+        const reqCreated = new Date(req.created_at).getTime();
+        const earlier = requests.find((r: any) =>
+          r.id !== req.id &&
+          r.requester_email === req.requester_email &&
+          new Date(r.created_at).getTime() < reqCreated &&
+          (reqCreated - new Date(r.created_at).getTime()) <= DUPLICATE_WINDOW_MS
+        );
+        return earlier ? earlier.request_id : null;
+      };
+
       const { data: unassignedRequests } = await supabase
         .from('requests')
         .select('*')
@@ -480,10 +494,21 @@ export const api = {
         };
       }
 
+      // Enrich recent and unassigned with duplicate flag
+      const recentEnriched = recent.map((r: any) => ({
+        ...r,
+        possible_duplicate_of: detectDuplicate(r),
+      }));
+
+      const unassignedEnriched = unassignedWithDays.map((r: any) => ({
+        ...r,
+        possible_duplicate_of: detectDuplicate(r),
+      }));
+
       return {
         stats: {
           ...stats,
-          escalated: unassignedWithDays.filter((r: any) => r.days_unassigned >= 3).length,
+          escalated: unassignedEnriched.filter((r: any) => r.days_unassigned >= 3).length,
         },
         slaStats: {
           withinSLA: slaCounts.withinSLA,
@@ -492,8 +517,8 @@ export const api = {
           paused: slaCounts.paused,
           compliance: slaCompliance,
         },
-        recentRequests: recent,
-        unassignedRequests: unassignedWithDays,
+        recentRequests: recentEnriched,
+        unassignedRequests: unassignedEnriched,
         projectStats,
         recentProjects: recentProjectsEnriched,
         myRequests,

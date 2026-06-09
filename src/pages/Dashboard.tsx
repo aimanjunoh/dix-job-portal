@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/shared/StatusBadge';
 import {
   ClipboardList, UserCheck, Clock, AlertCircle, CheckCircle2, PlusCircle, Users, HandMetal, AlertTriangle, FolderOpen,
-  Briefcase, BarChart3, ArrowRight, ShieldAlert, Timer, XCircle
+  Briefcase, BarChart3, ArrowRight, ShieldAlert, Timer, XCircle, Copy
 } from 'lucide-react';
 
 interface Stats {
@@ -245,6 +245,11 @@ export default function Dashboard() {
                               <AlertTriangle size={12} /> {req.days_unassigned}d unassigned
                             </span>
                           )}
+                          {req.possible_duplicate_of && (
+                            <span className="flex items-center gap-1 text-xs text-purple-600 font-semibold bg-purple-50 px-1.5 py-0.5 rounded-full">
+                              <Copy size={10} /> Possible duplicate of {req.possible_duplicate_of}
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm font-medium text-gray-800">{req.title}</p>
                         <p className="text-xs text-gray-500">{req.requester_name} · {req.department}</p>
@@ -298,7 +303,14 @@ export default function Dashboard() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-xs text-gray-500 font-mono">{req.request_id}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-gray-500 font-mono">{req.request_id}</p>
+                      {req.possible_duplicate_of && (
+                        <span className="flex items-center gap-1 text-xs text-purple-600 font-semibold bg-purple-50 px-1.5 py-0.5 rounded-full">
+                          <Copy size={10} /> Duplicate?
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm font-medium text-gray-800 truncate">{req.title}</p>
                     <p className="text-xs text-gray-500">{req.assigned_name || 'Unassigned'}</p>
                   </div>
