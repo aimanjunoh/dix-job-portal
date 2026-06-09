@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/shared/StatusBadge';
 import {
   ClipboardList, UserCheck, Clock, AlertCircle, CheckCircle2, PlusCircle, Users, HandMetal, AlertTriangle, FolderOpen,
-  ShieldCheck, Timer, ShieldAlert, TrendingUp
+  ShieldCheck, Timer, ShieldAlert, TrendingUp, Briefcase
 } from 'lucide-react';
 
 interface Stats {
@@ -37,6 +37,8 @@ export default function Dashboard() {
   const [projectStats, setProjectStats] = useState({ total: 0, active: 0, planning: 0, completed: 0 });
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
   const [slaStats, setSlaStats] = useState<SlaStats>({ withinSLA: 0, approachingSLA: 0, overdueSLA: 0, paused: 0, compliance: 100 });
+  const [myRequests, setMyRequests] = useState<any[]>([]);
+  const [myStats, setMyStats] = useState({ assigned: 0, active: 0, overdue: 0, completed: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,6 +57,8 @@ export default function Dashboard() {
       setProjectStats(dashData.projectStats);
       setRecentProjects(dashData.recentProjects || []);
       setSlaStats(dashData.slaStats || { withinSLA: 0, approachingSLA: 0, overdueSLA: 0, paused: 0, compliance: 100 });
+      setMyRequests(dashData.myRequests || []);
+      setMyStats(dashData.myStats || { assigned: 0, active: 0, overdue: 0, completed: 0 });
       setStaffList(staffData.users);
     } catch (err) {
       console.error(err);
@@ -157,6 +161,86 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* My Workload */}
+      {!isGuest && myStats.assigned > 0 && (
+        <div>
+          <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+            <Briefcase size={18} /> My Workload
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div onClick={() => navigate('/requests?mine=true')} className="glass-card p-4 text-center cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <ClipboardList className="text-white" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-blue-600">{myStats.assigned}</p>
+              <p className="text-xs text-gray-500">Total Assigned</p>
+            </div>
+            <div onClick={() => navigate('/requests?mine=true&status=In+Progress')} className="glass-card p-4 text-center cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all">
+              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <Clock className="text-white" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-amber-600">{myStats.active}</p>
+              <p className="text-xs text-gray-500">Active</p>
+            </div>
+            <div onClick={() => navigate('/requests?mine=true&slaStatus=Overdue')} className="glass-card p-4 text-center cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all">
+              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <ShieldAlert className="text-white" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-red-600">{myStats.overdue}</p>
+              <p className="text-xs text-gray-500">Overdue</p>
+            </div>
+            <div onClick={() => navigate('/requests?mine=true&status=Completed')} className="glass-card p-4 text-center cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <CheckCircle2 className="text-white" size={18} />
+              </div>
+              <p className="text-2xl font-bold text-green-600">{myStats.completed}</p>
+              <p className="text-xs text-gray-500">Completed</p>
+            </div>
+          </div>
+          <div className="glass p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-700">My Active Requests</h3>
+              <button onClick={() => navigate('/requests?mine=true')} className="text-xs text-primary-600 hover:text-primary-700 font-medium">View All My Requests →</button>
+            </div>
+            <div className="space-y-3 max-h-72 overflow-y-auto">
+              {myRequests.length === 0 ? (
+                <p className="text-gray-500 text-sm text-center py-4">No active requests assigned to you</p>
+              ) : (
+                myRequests.map((req: any) => (
+                  <div
+                    key={req.id}
+                    className="bg-white/50 rounded-xl p-3 cursor-pointer hover:bg-white/80 transition-colors"
+                    onClick={() => navigate(`/requests/${req.id}`)}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-gray-500 font-mono">{req.request_id}</p>
+                          {req.sla_status === 'Overdue' && (
+                            <span className="text-xs px-1.5 py-0.5 bg-red-100 text-red-700 rounded-full font-medium">Overdue</span>
+                          )}
+                          {req.sla_status === 'Approaching SLA' && (
+                            <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">Due Soon</span>
+                          )}
+                        </div>
+                        <p className="text-sm font-medium text-gray-800 truncate">{req.title}</p>
+                        <p className="text-xs text-gray-500">{req.requester_name} · {req.department}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <StatusBadge status={req.status} />
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          req.urgency === 'Critical' ? 'urgency-critical' : req.urgency === 'Urgent' ? 'urgency-urgent' : 'urgency-normal'
+                        }`}>{req.urgency}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Unassigned Requests */}

@@ -11,7 +11,7 @@ const STATUSES = ['New', 'In Progress', 'Pending Info', 'Completed'];
 const URGENCIES = ['Normal', 'Urgent', 'Critical'];
 
 export default function Requests() {
-  const { isAdmin, isGuest } = useAuth();
+  const { isAdmin, isGuest, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [requests, setRequests] = useState<any[]>([]);
@@ -21,6 +21,7 @@ export default function Requests() {
   const [statusFilter, setStatusFilter] = useState('');
   const [hideCompleted, setHideCompleted] = useState(false);
   const [unassignedOnly, setUnassignedOnly] = useState(false);
+  const [myRequestsOnly, setMyRequestsOnly] = useState(false);
   const [slaFilter, setSlaFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -38,12 +39,14 @@ export default function Requests() {
     const status = searchParams.get('status');
     const unassigned = searchParams.get('unassigned');
     const slaStatus = searchParams.get('slaStatus');
+    const mine = searchParams.get('mine');
     if (status) setStatusFilter(status);
     if (unassigned === 'true') setUnassignedOnly(true);
     if (slaStatus) setSlaFilter(slaStatus);
+    if (mine === 'true') setMyRequestsOnly(true);
   }, []);
 
-  useEffect(() => { loadRequests(); }, [page, search, statusFilter, hideCompleted, unassignedOnly, slaFilter]);
+  useEffect(() => { loadRequests(); }, [page, search, statusFilter, hideCompleted, unassignedOnly, myRequestsOnly, slaFilter]);
   useEffect(() => { api.users.all().then(d => setStaffList(d.users)).catch(() => {}); }, []);
 
   const loadRequests = async () => {
@@ -54,6 +57,7 @@ export default function Requests() {
       if (statusFilter) params.status = statusFilter;
       if (hideCompleted) params.hideCompleted = 'true';
       if (unassignedOnly) params.unassigned = 'true';
+      if (myRequestsOnly && profile?.id) params.assignedTo = profile.id;
       if (slaFilter) params.slaStatus = slaFilter;
       const data = await api.requests.list(params);
       setRequests(data.requests);
@@ -153,6 +157,13 @@ export default function Requests() {
               className="rounded border-gray-300 text-primary-500 focus:ring-primary-500" />
             Unassigned Only
           </label>
+          {profile && !isGuest && (
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input type="checkbox" checked={myRequestsOnly} onChange={(e) => { setMyRequestsOnly(e.target.checked); setPage(1); }}
+                className="rounded border-gray-300 text-primary-500 focus:ring-primary-500" />
+              <span className="font-medium text-primary-600">My Requests</span>
+            </label>
+          )}
           <select value={slaFilter} onChange={(e) => { setSlaFilter(e.target.value); setPage(1); }}
             className="px-3 py-1.5 bg-white/60 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
             <option value="">All SLA</option>

@@ -316,6 +316,9 @@ export const api = {
       if (params.unassigned === 'true') {
         query = query.is('assigned_to', null);
       }
+      if (params.assignedTo) {
+        query = query.eq('assigned_to', params.assignedTo);
+      }
       if (params.slaStatus) {
         query = query.eq('sla_status', params.slaStatus);
       }
@@ -431,6 +434,45 @@ export const api = {
         return { ...p, progress: computedProgress, health };
       }));
 
+      // Get current user's assigned requests
+      const { data: { user } } = await supabase.auth.getUser();
+      let myRequests: any[] = [];
+      let myStats = { assigned: 0, active: 0, overdue: 0, completed: 0 };
+      if (user) {
+        const { data: myReqs } = await supabase
+          .from('requests')
+          .select('*, users!assigned_to(name)')
+          .eq('assigned_to', user.id)
+          .neq('status', 'Completed')
+          .order('updated_at', { ascending: false })
+          .limit(10);
+
+        myRequests = (myReqs || []).map((r: any) => ({
+          ...r,
+          assigned_name: r.users?.name || null,
+          users: undefined,
+          sla_status: r.sla_due_date
+            ? calculateSlaStatus(r.sla_due_date, r.status, r.sla_paused_at || null)
+            : 'Within SLA',
+        }));
+
+        const allMyReqs = requests.filter((r: any) => r.assigned_to === user.id);
+        const activeMy = allMyReqs.filter((r: any) => r.status !== 'Completed');
+        let overdueCount = 0;
+        for (const r of activeMy) {
+          const slaSt = r.sla_due_date
+            ? calculateSlaStatus(r.sla_due_date, r.status, r.sla_paused_at || null)
+            : 'Within SLA';
+          if (slaSt === 'Overdue') overdueCount++;
+        }
+        myStats = {
+          assigned: allMyReqs.length,
+          active: activeMy.length,
+          overdue: overdueCount,
+          completed: allMyReqs.filter((r: any) => r.status === 'Completed').length,
+        };
+      }
+
       return {
         stats: {
           ...stats,
@@ -447,6 +489,8 @@ export const api = {
         unassignedRequests: unassignedWithDays,
         projectStats,
         recentProjects: recentProjectsEnriched,
+        myRequests,
+        myStats,
       };
     },
 
