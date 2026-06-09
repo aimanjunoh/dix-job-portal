@@ -81,28 +81,9 @@ export default async function handler(req: any, res: any) {
       details: `Auto-created from email by ${sender_email}`,
     });
 
-    // Send notification email to admins
-    const { data: admins } = await supabase
-      .from('users')
-      .select('email')
-      .eq('role', 'admin')
-      .eq('status', 'active');
-
-    const adminEmails = (admins || []).map(a => a.email);
-
-    // Send notification to admins via internal send-email API
-    if (adminEmails.length > 0) {
-      await fetch(`${PORTAL_URL}/api/send-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: adminEmails,
-          subject: `New Email Request: ${request_id} — ${subject}`,
-          type: 'new_request',
-          data: { ...data, requester_name: sender_name, token: action_token },
-        }),
-      });
-    }
+    // No admin notification here — the admin is the one who triggered this
+    // by labeling the email. They already see it on the dashboard.
+    // Staff will be notified when the admin assigns the request.
 
     // Send confirmation email to requester
     if (sender_email) {
