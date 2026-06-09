@@ -95,9 +95,9 @@ export default function Dashboard() {
   ];
 
   const projectCards = [
-    { label: 'Active Projects', value: projectStats.active, icon: Timer, color: 'from-blue-500 to-blue-700' },
-    { label: 'Delayed', value: projectStats.delayed, icon: XCircle, color: 'from-red-500 to-red-700' },
-    { label: 'Completed', value: projectStats.completed, icon: CheckCircle2, color: 'from-green-400 to-green-600' },
+    { label: 'Active Projects', value: projectStats.active, icon: Timer, color: 'from-blue-500 to-blue-700', filter: 'status=Active' },
+    { label: 'Delayed', value: projectStats.delayed, icon: XCircle, color: 'from-red-500 to-red-700', filter: '' },
+    { label: 'Completed', value: projectStats.completed, icon: CheckCircle2, color: 'from-green-400 to-green-600', filter: 'status=Completed' },
   ];
 
   return (
@@ -326,7 +326,7 @@ export default function Dashboard() {
         </div>
         <div className="grid grid-cols-3 gap-3">
           {projectCards.map((card) => (
-            <div key={card.label} className="bg-white/50 rounded-xl p-4 text-center">
+            <div key={card.label} onClick={() => navigate(`/projects?${card.filter}`)} className="bg-white/50 rounded-xl p-4 text-center cursor-pointer hover:bg-white/80 hover:shadow-md hover:scale-[1.03] transition-all">
               <div className={`w-10 h-10 bg-gradient-to-br ${card.color} rounded-xl flex items-center justify-center mx-auto mb-2`}>
                 <card.icon className="text-white" size={18} />
               </div>
