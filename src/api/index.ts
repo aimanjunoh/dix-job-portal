@@ -717,6 +717,20 @@ export const api = {
 
       await logActivity(id, 'Request Claimed', user.email || 'System', `Self-assigned by ${user.email}`);
 
+      // Notify admins that a staff member claimed this job
+      const { data: claimer } = await supabase.from('users').select('name, email').eq('id', user.id).single();
+      const adminEmails = await getAdminEmails();
+      if (adminEmails.length > 0) {
+        sendEmail(adminEmails, `Job Claimed: ${existing.request_id} — ${existing.title}`, 'claimed', {
+          request_id: existing.request_id,
+          title: existing.title,
+          requester_name: existing.requester_name,
+          assigned_name: claimer?.name || user.email,
+          urgency: existing.urgency,
+          token: existing.action_token,
+        });
+      }
+
       return { request: data };
     },
 

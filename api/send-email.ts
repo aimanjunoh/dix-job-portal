@@ -19,6 +19,7 @@ export default async function handler(req: any, res: any) {
   const builders: Record<string, (d: any) => string> = {
     new_request: buildNewRequestEmail,
     assignment: buildAssignmentEmail,
+    claimed: buildClaimedEmail,
     reassigned: buildReassignedEmail,
     status_change: buildStatusChangeEmail,
     completed: buildCompletedEmail,
@@ -150,6 +151,32 @@ function buildAssignmentEmail(data: any): string {
         </table>
         <div style="margin-top: 24px;">
           <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildClaimedEmail(data: any): string {
+  const { request_id, title, requester_name, assigned_name, urgency, token } = data;
+  const viewUrl = `${PORTAL_URL}/action?token=${token}&action=view`;
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
+      <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 24px; border-radius: 16px 16px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 20px;">Job Claimed</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">${assigned_name} has claimed this request</p>
+      </div>
+      <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px; width: 120px;">Request ID</td><td style="padding: 8px 0; font-size: 14px; font-weight: 600;">${request_id}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Title</td><td style="padding: 8px 0; font-size: 14px;">${title}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Requester</td><td style="padding: 8px 0; font-size: 14px;">${requester_name || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Claimed By</td><td style="padding: 8px 0; font-size: 14px; font-weight: 600;">${assigned_name}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Urgency</td><td style="padding: 8px 0; font-size: 14px;">${urgency || 'Normal'}</td></tr>
+        </table>
+        <div style="margin-top: 24px;">
+          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #f59e0b; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
         </div>
       </div>
     </div>
