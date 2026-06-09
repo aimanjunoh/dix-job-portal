@@ -85,6 +85,18 @@ function processNewRequests() {
       urgency = 'Critical';
     }
 
+    // Detect and strip Re:/Fwd: prefixes for thread replies
+    var isThreadReply = false;
+    var cleanedSubject = subject;
+    if (/^Re:\s*/i.test(cleanedSubject)) {
+      isThreadReply = true;
+      cleanedSubject = cleanedSubject.replace(/^Re:\s*/i, '').trim();
+    }
+    if (/^Fwd:\s*/i.test(cleanedSubject)) {
+      isThreadReply = true;
+      cleanedSubject = cleanedSubject.replace(/^Fwd:\s*/i, '').trim();
+    }
+
     // Clean up body
     body = body.substring(0, 2000);
     body = body.split('\r\n').join('\n');
@@ -106,11 +118,12 @@ function processNewRequests() {
     var success = sendToPortal({
       sender_name: senderName,
       sender_email: senderEmail,
-      subject: subject,
+      subject: cleanedSubject,
       body: body,
       date: date,
       urgency: urgency,
       category: 'Email',
+      is_thread_reply: isThreadReply,
     });
 
     if (success) {

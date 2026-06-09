@@ -250,6 +250,11 @@ export default function Dashboard() {
                               <Copy size={10} /> Possible duplicate of {req.possible_duplicate_of}
                             </span>
                           )}
+                          {req.remarks && req.remarks.includes('thread reply') && (
+                            <span className="flex items-center gap-1 text-xs text-indigo-600 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded-full">
+                              Email Reply
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm font-medium text-gray-800">{req.title}</p>
                         <p className="text-xs text-gray-500">{req.requester_name} · {req.department}</p>

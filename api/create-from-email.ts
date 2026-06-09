@@ -35,6 +35,7 @@ export default async function handler(req: any, res: any) {
   }
 
   const { sender_name, sender_email, subject, body, date } = req.body;
+  const isThreadReply = !!req.body.is_thread_reply;
 
   if (!sender_email || !subject) {
     return res.status(400).json({ error: 'Missing sender_email or subject' });
@@ -49,6 +50,12 @@ export default async function handler(req: any, res: any) {
     const category = req.body.category || 'Email';
     const urgency = req.body.urgency || 'Normal';
 
+    // Build remarks — flag thread replies for admin review
+    let remarks = `Created from email on ${date || new Date().toISOString()}`;
+    if (isThreadReply) {
+      remarks += ' | Submitted as email thread reply — may be a new request or follow-up to a previous one.';
+    }
+
     const { data, error } = await supabase.from('requests').insert({
       request_id,
       title: subject,
@@ -60,7 +67,7 @@ export default async function handler(req: any, res: any) {
       description: body || '',
       assigned_to: null,
       status: 'New',
-      remarks: `Created from email on ${date || new Date().toISOString()}`,
+      remarks,
       action_token,
     }).select().single();
 
