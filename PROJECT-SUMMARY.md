@@ -75,30 +75,61 @@ The entire portal uses a glassmorphism design language:
   - Cannot create, edit, assign, claim, or change any status
   - Export buttons hidden for guests
 - **Auto-sync** — `users` table mirrors `auth.users` with UUID foreign key
-- **Personalized greeting** — Dashboard shows "Welcome, [Name]" with role
+- **Personalized greeting** — Dashboard shows "Welcome back, [Name]" with department/position and role badge
 
-### 4.2 Dashboard
-- 7 stat cards: Total, New, Unassigned, Escalated, In Progress, Pending Info, Completed
-- SLA widgets: Within SLA, Approaching SLA, Overdue, SLA Compliance %
-- All cards clickable → navigate to filtered Requests page
-- Unassigned Requests panel with assign/claim functionality
+### 4.2 Dashboard (Operational Command Center)
+The dashboard is designed as an operational command center — showing what requires action, what is assigned, and what needs attention today. All analytics and reporting are separated into the Insights page.
+
+**Header:**
+- "Welcome back, [Name]" greeting with department/position subtitle
+- Role badge (Administrator, Staff, Guest)
+- "Insights & Reports" button linking to Insights page
+
+**Section A — Request Summary:**
+- 7 clickable stat cards: Total, New, Unassigned, Escalated, In Progress, Pending Info, Completed
+- Clicking any card navigates to filtered Requests page
+
+**Section B — My Workload (personalized):**
+- 4 clickable cards: Total Assigned, Active, Overdue, Completed
+- Shows counts for the logged-in user's assigned requests
+- Only visible for non-guest users with assigned requests
+
+**Section C — My Active Requests:**
+- Scrollable list of user's active requests with SLA indicators (Overdue, Due Soon)
+- "View All My Requests" link to `/requests?mine=true`
+
+**Section D — Unassigned Requests + Recently Updated:**
+- Side-by-side panels
+- Unassigned requests with admin assign dropdown or staff "Claim This Job" button
+- Escalation indicators for requests unassigned 3+ days
 - Recently Updated requests list
-- Projects section with stats + recent 5 projects with progress bars
+
+**Section E — Compact Projects Summary:**
+- 3 clickable cards: Active Projects, Delayed, Completed
+- Active navigates to `/projects?status=Active`, Completed to `/projects?status=Completed`
+- "View Projects" button
+- No progress bars on dashboard (detailed tracking stays in Projects page)
+
+**Removed from Dashboard (moved to Insights):**
+- SLA Overview widgets (Within SLA, Approaching, Overdue, Compliance %)
+- Full project listing with progress bars
+- Analytics charts and reporting metrics
 
 ### 4.3 Job Requests (BAU)
 - Full CRUD: Create, Read, Update, Delete
 - Auto-generated IDs: `REQ-0001`, `REQ-0002`, etc.
 - Fields: Title, Requester, Department, Category, Urgency, Description, Status, Remarks
-- Statuses: New → In Progress → Pending Info → Completed
+- Statuses: New, In Progress, Pending Info, Completed
 - Staff assignment (admin) or self-claim (staff)
+- "My Requests" filter checkbox with `?mine=true` URL param
 - Activity logging for all changes
 
 ### 4.4 SLA Management
 - **Rules:** Normal = 3 working days, Urgent = 2, Critical = same day
 - **Pause/Resume:** SLA pauses on Pending Info/Content/Approval, resumes when active
 - **Dynamic calculation:** SLA status computed client-side from `created_at` + urgency + paused days
-- **Statuses:** Within SLA, Approaching SLA (≤1 day remaining), Overdue, Paused
-- **Dashboard widgets** — Clickable, filter request list by SLA status
+- **Statuses:** Within SLA, Approaching SLA (1 day remaining), Overdue, Paused
+- **SLA insights available on Insights page** (moved from dashboard)
 
 ### 4.5 Project Management
 - Full CRUD for projects with owner assignment
@@ -110,6 +141,7 @@ The entire portal uses a glassmorphism design language:
 - Progress = sum of completed milestone weights
 - Fallback to count-based progress when no weights set
 - Members, tasks, milestones, and notes per project
+- URL param support: `/projects?status=Active` pre-filters the list
 
 ### 4.6 Insights Page (Analytics & Reporting)
 5 tabbed sections:
@@ -126,12 +158,13 @@ The entire portal uses a glassmorphism design language:
 **Exports:** CSV (native JS), Excel (xlsx multi-sheet), PDF (window.print with @media print CSS)
 
 ### 4.7 Email Integration
-- **Inbound:** Gmail emails labeled "Request Job" → auto-ingested as portal requests
+- **Inbound:** Gmail emails labeled "Request Job" auto-ingested as portal requests
 - **Outbound notifications:**
   - Request received (to requester)
-  - Assignment notifications
-  - Completion alerts
-  - Escalation alerts (unassigned ≥3 days)
+  - Assignment notifications (to assigned staff)
+  - Completion alerts (to requester and relevant parties)
+  - Escalation alerts (unassigned 3+ days)
+  - **Staff self-claim notification** (to all admins when staff claims a job)
   - Daily digest for overdue items
 - **Delivery:** GmailApp via Google Apps Script Web App
 
@@ -153,10 +186,10 @@ The entire portal uses a glassmorphism design language:
 
 | Table | Purpose | Key Columns |
 |---|---|---|
-| `users` | User profiles (extends auth.users) | id (UUID PK → auth.users), name, email, role, department, status |
-| `requests` | Job requests | id, request_id, title, requester_name/email, department, category, urgency, status, assigned_to (FK→users), sla_due_date, sla_status, sla_paused_days |
+| `users` | User profiles (extends auth.users) | id (UUID PK -> auth.users), name, email, role, department, status |
+| `requests` | Job requests | id, request_id, title, requester_name/email, department, category, urgency, status, assigned_to (FK->users), sla_due_date, sla_status, sla_paused_days |
 | `activity_logs` | Audit trail | id, request_id (FK), action, performed_by, details, timestamp |
-| `projects` | Project records | id, project_id, title, owner_id (FK→users), status, start_date, due_date, progress |
+| `projects` | Project records | id, project_id, title, owner_id (FK->users), status, start_date, due_date, progress |
 | `project_members` | Project team members | project_id (FK), user_id (FK), role (owner/member) |
 | `project_milestones` | Milestone phases | project_id (FK), title, completed, sort_order, weight (0-100) |
 | `project_tasks` | Project tasks | project_id (FK), milestone_id (FK), assigned_to (FK), status, priority, due_date |
@@ -203,10 +236,10 @@ src/
 ├── lib/
 │   └── supabase.ts            # Supabase client initialization
 ├── pages/
-│   ├── Dashboard.tsx          # Main dashboard
+│   ├── Dashboard.tsx          # Operational command center
 │   ├── Requests.tsx           # Request list with filters
 │   ├── RequestDetail.tsx      # Single request view
-│   ├── Projects.tsx           # Project list
+│   ├── Projects.tsx           # Project list (URL param aware)
 │   ├── ProjectDetail.tsx      # Single project with milestones/tasks
 │   ├── Users.tsx              # User management (admin)
 │   ├── Activities.tsx         # Activity logs
@@ -226,17 +259,17 @@ src/
 ### Data Flow (Insights)
 ```
 api.insights.fetchAll()
-  → 5 parallel Supabase queries (requests, projects, users, tasks, milestones)
-  → Enrichment (SLA status, project health/progress)
-  → Passed to Insights page state
-  → useMemo() calls pure functions from utils/insights.ts
-  → Computed stats passed as props to section components
-  → Recharts renders visualizations
+  -> 5 parallel Supabase queries (requests, projects, users, tasks, milestones)
+  -> Enrichment (SLA status, project health/progress)
+  -> Passed to Insights page state
+  -> useMemo() calls pure functions from utils/insights.ts
+  -> Computed stats passed as props to section components
+  -> Recharts renders visualizations
 ```
 
-### API Layer (`src/api/index.ts` — 1028 lines)
+### API Layer (`src/api/index.ts`)
 Key namespaces:
-- `api.requests.*` — CRUD, dashboard stats, SLA calculations
+- `api.requests.*` — CRUD, dashboard stats, SLA calculations, My Workload stats
 - `api.projects.*` — CRUD, members, milestones, tasks, notes
 - `api.users.*` — CRUD, profile management
 - `api.activities.*` — Log creation and retrieval
@@ -244,18 +277,18 @@ Key namespaces:
 
 ### Routing
 ```
-/login          → Login page
-/action         → QuickAction page
-/               → Protected Layout
-  /             → Dashboard (index)
-  /users        → User Management (admin only)
-  /requests     → Requests list
-  /requests/:id → Request detail
-  /activities   → Activity logs
-  /projects     → Projects list
-  /projects/:id → Project detail
-  /insights     → Insights (analytics)
-*               → Redirect to /
+/login          -> Login page
+/action         -> QuickAction page
+/               -> Protected Layout
+  /             -> Dashboard (operational command center)
+  /users        -> User Management (admin only)
+  /requests     -> Requests list (supports ?status, ?unassigned, ?mine, ?slaStatus params)
+  /requests/:id -> Request detail
+  /activities   -> Activity logs
+  /projects     -> Projects list (supports ?status param)
+  /projects/:id -> Project detail
+  /insights     -> Insights (analytics)
+*               -> Redirect to /
 ```
 
 ---
@@ -290,7 +323,7 @@ Key namespaces:
 - Gmail integration via Google Apps Script
 - Request received email notifications
 - Clickable dashboard cards with filters
-- User management department→position rename
+- User management department->position rename
 - UUID fixes for foreign keys
 - RLS policy fixes (idempotent DROP IF EXISTS)
 
@@ -299,7 +332,7 @@ Key namespaces:
 - CORS fixes for Gmail Apps Script
 - Admin completion emails
 - Staff self-claim functionality
-- Escalation alerts (unassigned ≥3 days)
+- Escalation alerts (unassigned 3+ days)
 - Daily digest for overdue items
 - Guest preview login
 
@@ -322,8 +355,20 @@ Key namespaces:
 - Parallel Supabase data fetching
 - Pure computation functions separated from UI
 
-### Phase 7 — Polish
-- Personalized dashboard greeting (name + role)
+### Phase 7 — Personalization & Notifications
+- Personalized dashboard greeting ("Welcome back, [Name]" + role)
+- Admin notification on staff job claim
+- My Requests filter and My Workload dashboard widget
+
+### Phase 8 — Dashboard UX Restructure
+- Dashboard restructured as Operational Command Center
+- SLA Overview and full Projects section removed from dashboard
+- My Workload section with personalized stats (Assigned, Active, Overdue, Completed)
+- My Active Requests list with SLA indicators
+- Compact Projects Summary widget (Active, Delayed, Completed)
+- All dashboard summary cards now clickable (including project cards)
+- URL param support added to Projects page (`?status=Active`, `?status=Completed`)
+- Analytics and reporting consolidated in Insights page
 
 ---
 
@@ -341,6 +386,8 @@ Key namespaces:
 | UUID foreign keys | Required by Supabase auth.users referential integrity |
 | Working days SLA | Weekends excluded from SLA calculations |
 | Parallel Supabase queries | Promise.all for 5 queries in Insights reduces load time |
+| Operational vs Analytical split | Dashboard for action, Insights for reporting — reduces cognitive load |
+| URL-based filtering | Enables deep linking from dashboard cards to filtered lists |
 
 ---
 
@@ -348,7 +395,7 @@ Key namespaces:
 
 | Constraint | Impact |
 |---|---|
-| Supabase 500MB database | Sufficient for small team |
+| Supabase 500MB database | Sufficient for small team; attachments should use Supabase Storage (1GB free) |
 | Supabase 50K monthly active users | More than enough |
 | Vercel 100GB bandwidth | Adequate for low-traffic portal |
 | GitHub private repo | Single contributor, no issues |
@@ -370,4 +417,4 @@ Key namespaces:
 ---
 
 *Generated from project history and codebase analysis.*
-*Last updated: After personalized dashboard greeting feature.*
+*Last updated: After Dashboard UX Restructure (Phase 8).*
