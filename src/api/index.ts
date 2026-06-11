@@ -232,6 +232,7 @@ export const api = {
         .from('users')
         .select('id, name, email, role, department')
         .eq('status', 'active')
+        .neq('role', 'guest')
         .order('name');
       if (error) throw error;
       return { users: data || [] };
