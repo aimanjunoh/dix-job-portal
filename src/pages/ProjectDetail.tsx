@@ -309,14 +309,21 @@ export default function ProjectDetail() {
               const msTasks = tasks.filter(t => t.milestone_id === ms.id);
               const msDone = msTasks.filter(t => t.status === 'Done').length;
               return (
-                <div key={ms.id} className={`glass-card p-4 ${ms.completed ? 'opacity-60' : ''}`}>
+                <div key={ms.id} className={`glass-card p-4 ${ms.completed ? 'opacity-70' : ''}`}>
                   <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <button onClick={() => toggleMilestone(ms)} className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${ms.completed ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-green-400'}`}>
-                        {ms.completed && <Check size={12} />}
+                    <div className="flex items-start gap-3 flex-1">
+                      <button
+                        onClick={() => toggleMilestone(ms)}
+                        className={`mt-0.5 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                          ms.completed
+                            ? 'bg-green-500 text-white hover:bg-green-600'
+                            : 'bg-white border-2 border-gray-300 text-gray-500 hover:border-green-400 hover:text-green-600'
+                        }`}
+                      >
+                        {ms.completed ? <><Check size={14} /> Completed</> : <><div className="w-3.5 h-3.5 rounded border-2 border-current" /> Incomplete</>}
                       </button>
-                      <div>
-                        <div className="flex items-center gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h3 className={`font-medium text-gray-800 ${ms.completed ? 'line-through' : ''}`}>{ms.title}</h3>
                           {ms.weight > 0 && (
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ms.completed ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{ms.weight}%</span>
@@ -329,7 +336,7 @@ export default function ProjectDetail() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 ml-2">
                       <button onClick={() => setEditingMilestone({ id: ms.id, title: ms.title, description: ms.description || '', weight: ms.weight || 0 })} className="p-1 text-blue-400 hover:bg-blue-50 rounded"><Edit2 size={14} /></button>
                       <button onClick={() => deleteMilestone(ms.id)} className="p-1 text-red-400 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
                     </div>

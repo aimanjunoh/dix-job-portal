@@ -1029,6 +1029,18 @@ export const api = {
       if (data.sort_order !== undefined) updateData.sort_order = data.sort_order;
       const { data: milestone, error } = await supabase.from('project_milestones').update(updateData).eq('id', id).select().single();
       if (error) throw error;
+
+      // Auto-recalculate and persist project progress when milestone completion or weight changes
+      if (data.completed !== undefined || data.weight !== undefined) {
+        const projectId = milestone.project_id;
+        const [{ data: pTasks }, { data: pMilestones }] = await Promise.all([
+          supabase.from('project_tasks').select('status').eq('project_id', projectId),
+          supabase.from('project_milestones').select('completed, weight').eq('project_id', projectId),
+        ]);
+        const newProgress = calculateProjectProgress(pTasks || [], pMilestones || []);
+        await supabase.from('projects').update({ progress: newProgress }).eq('id', projectId);
+      }
+
       return { milestone };
     },
 
@@ -1051,6 +1063,18 @@ export const api = {
     updateTask: async (id: number, data: any) => {
       const { data: task, error } = await supabase.from('project_tasks').update(data).eq('id', id).select().single();
       if (error) throw error;
+
+      // Auto-recalculate and persist project progress when task status changes
+      if (data.status !== undefined && task) {
+        const projectId = task.project_id;
+        const [{ data: pTasks }, { data: pMilestones }] = await Promise.all([
+          supabase.from('project_tasks').select('status').eq('project_id', projectId),
+          supabase.from('project_milestones').select('completed, weight').eq('project_id', projectId),
+        ]);
+        const newProgress = calculateProjectProgress(pTasks || [], pMilestones || []);
+        await supabase.from('projects').update({ progress: newProgress }).eq('id', projectId);
+      }
+
       return { task };
     },
 
