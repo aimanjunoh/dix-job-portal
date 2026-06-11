@@ -287,16 +287,21 @@ export default function ProjectDetail() {
           {milestones.length > 0 && milestones.some(m => m.weight > 0) && (
             <div className="glass p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">Milestone Weight Total</span>
-                <span className={`text-sm font-bold ${totalWeight === 100 ? 'text-green-600' : 'text-red-500'}`}>{totalWeight}% / 100%</span>
+                <span className="text-sm font-medium text-gray-700">Overall Progress</span>
+                <span className="text-sm font-bold text-green-600">{completedWeight}%</span>
               </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className={`h-full rounded-full transition-all ${totalWeight === 100 ? 'bg-green-500' : totalWeight > 100 ? 'bg-red-500' : 'bg-amber-500'}`} style={{ width: `${Math.min(100, totalWeight)}%` }} />
+              <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all" style={{ width: `${Math.min(100, completedWeight)}%` }} />
               </div>
-              <p className="text-xs text-gray-400 mt-1">Completed: {completedWeight}% of {totalWeight}%</p>
-              {totalWeight !== 100 && (
-                <p className="text-xs text-red-500 mt-1 font-medium">⚠ Total weight must equal 100%. Adjust milestone weights.</p>
-              )}
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-gray-400">{completedWeight}% of {totalWeight}% weight completed</p>
+                {totalWeight !== 100 && (
+                  <span className="text-xs text-red-500 font-medium">⚠ Weights total {totalWeight}% (need 100%)</span>
+                )}
+                {totalWeight === 100 && (
+                  <span className="text-xs text-green-500 font-medium">✓ Weights balanced</span>
+                )}
+              </div>
             </div>
           )}
           <div className="flex justify-end">
