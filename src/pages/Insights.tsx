@@ -120,29 +120,32 @@ export default function Insights() {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1 flex items-center gap-2">
-            <BarChart3 size={28} /> Insights
+          <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1 flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center">
+              <BarChart3 size={20} />
+            </div>
+            Insights
           </h1>
-          <p className="text-white/70 text-sm">Analytics, trends and management reporting</p>
+          <p className="text-white/60 text-sm ml-[46px]">Analytics, trends and management reporting</p>
         </div>
 
         {/* Export buttons (hidden for guests) */}
         {!isGuest && (
           <div className="flex gap-2 print:hidden">
             <button onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/90 hover:bg-white rounded-xl text-sm font-medium text-gray-700 transition-all shadow-sm">
+              className="flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-sm font-medium text-white/90 transition-all border border-white/10">
               <Download size={14} /> CSV
             </button>
             <button onClick={handleExportExcel}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/90 hover:bg-white rounded-xl text-sm font-medium text-gray-700 transition-all shadow-sm">
+              className="flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-sm font-medium text-white/90 transition-all border border-white/10">
               <FileSpreadsheet size={14} /> Excel
             </button>
             <button onClick={handleExportPDF}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/90 hover:bg-white rounded-xl text-sm font-medium text-gray-700 transition-all shadow-sm">
+              className="flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-sm font-medium text-white/90 transition-all border border-white/10">
               <FileText size={14} /> PDF
             </button>
           </div>
@@ -155,10 +158,10 @@ export default function Insights() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+            className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === tab.key
-                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
-                : 'text-gray-600 hover:bg-white/60 hover:text-gray-900'
+                ? 'bg-white/90 text-gray-800 shadow-lg shadow-black/5'
+                : 'text-gray-500 hover:bg-white/30 hover:text-gray-700'
             }`}
           >
             {tab.label}
