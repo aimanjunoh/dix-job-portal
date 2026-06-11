@@ -10,6 +10,14 @@ const PROJECT_STATUSES = ['Planning', 'Active', 'On Hold', 'Completed', 'Cancell
 const TASK_STATUSES = ['Todo', 'In Progress', 'Review', 'Done'];
 const TASK_PRIORITIES = ['Low', 'Normal', 'High', 'Critical'];
 const TABS = ['Overview', 'Milestones', 'Tasks', 'Notes'] as const;
+const NOTE_CATEGORIES = ['General', 'Meeting', 'Decision', 'Risk / Issue', 'Change Request'] as const;
+const NOTE_CATEGORY_COLORS: Record<string, string> = {
+  'General': 'bg-gray-100 text-gray-600',
+  'Meeting': 'bg-blue-100 text-blue-700',
+  'Decision': 'bg-purple-100 text-purple-700',
+  'Risk / Issue': 'bg-red-100 text-red-700',
+  'Change Request': 'bg-amber-100 text-amber-700',
+};
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -29,6 +37,8 @@ export default function ProjectDetail() {
   const [milestoneOpen, setMilestoneOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [noteCategory, setNoteCategory] = useState<string>('General');
+  const [noteFilter, setNoteFilter] = useState<string>('');
   const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   // Forms
@@ -89,26 +99,7 @@ export default function ProjectDetail() {
 
   const toggleMilestone = async (ms: any) => {
     try {
-      const newCompleted = !ms.completed;
-      await api.projects.updateMilestone(ms.id, { completed: newCompleted });
-      // Recalculate progress based on milestone weights
-      const updatedMilestones = milestones.map(m => m.id === ms.id ? { ...m, completed: newCompleted } : m);
-      const hasWeights = updatedMilestones.some(m => m.weight && m.weight > 0);
-      let progress = 0;
-      if (hasWeights) {
-        progress = updatedMilestones.filter(m => m.completed).reduce((sum, m) => sum + (m.weight || 0), 0);
-        progress = Math.min(100, progress);
-      } else {
-        // Fallback to old logic
-        const doneMs = updatedMilestones.filter(m => m.completed).length;
-        const doneTasks = tasks.filter(t => t.status === 'Done').length;
-        if (updatedMilestones.length > 0) {
-          const msPct = (doneMs / updatedMilestones.length) * 100;
-          const taskPct = tasks.length > 0 ? (doneTasks / tasks.length) * 100 : 0;
-          progress = Math.round(msPct * 0.5 + taskPct * 0.5);
-        }
-      }
-      await api.projects.update(Number(id), { progress });
+      await api.projects.updateMilestone(ms.id, { completed: !ms.completed });
       loadProject();
     } catch (err: any) { toast.error(err.message); }
   };
@@ -119,6 +110,7 @@ export default function ProjectDetail() {
     try {
       await api.projects.updateMilestone(editingMilestone.id, {
         title: editingMilestone.title,
+        description: editingMilestone.description || '',
         weight: Number(editingMilestone.weight) || 0,
       });
       toast.success('Milestone updated');
@@ -150,20 +142,6 @@ export default function ProjectDetail() {
   const updateTaskStatus = async (taskId: number, status: string) => {
     try {
       await api.projects.updateTask(taskId, { status });
-      // Recalculate progress using milestone weights if available
-      const hasWeights = milestones.some(m => m.weight && m.weight > 0);
-      let progress = 0;
-      if (hasWeights) {
-        progress = milestones.filter(m => m.completed).reduce((sum, m) => sum + (m.weight || 0), 0);
-        progress = Math.min(100, progress);
-      } else {
-        const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status } : t);
-        const doneTasks = updatedTasks.filter(t => t.status === 'Done').length;
-        const totalTasksCount = updatedTasks.length;
-        if (totalTasksCount > 0 && doneTasks === totalTasksCount) progress = 95;
-        else if (totalTasksCount > 0) progress = Math.round((doneTasks / totalTasksCount) * 100);
-      }
-      await api.projects.update(Number(id), { progress });
       loadProject();
     } catch (err: any) { toast.error(err.message); }
   };
@@ -180,8 +158,9 @@ export default function ProjectDetail() {
   const handleAddNote = async () => {
     if (!noteText.trim()) return;
     try {
-      await api.projects.addNote(Number(id), noteText);
+      await api.projects.addNote(Number(id), noteText, noteCategory);
       setNoteText('');
+      setNoteCategory('General');
       loadProject();
     } catch (err: any) { toast.error(err.message); }
   };
@@ -351,7 +330,7 @@ export default function ProjectDetail() {
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => setEditingMilestone({ id: ms.id, title: ms.title, weight: ms.weight || 0 })} className="p-1 text-blue-400 hover:bg-blue-50 rounded"><Edit2 size={14} /></button>
+                      <button onClick={() => setEditingMilestone({ id: ms.id, title: ms.title, description: ms.description || '', weight: ms.weight || 0 })} className="p-1 text-blue-400 hover:bg-blue-50 rounded"><Edit2 size={14} /></button>
                       <button onClick={() => deleteMilestone(ms.id)} className="p-1 text-red-400 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
                     </div>
                   </div>
@@ -382,6 +361,7 @@ export default function ProjectDetail() {
                           <p className="text-sm font-medium text-gray-800 flex-1">{task.title}</p>
                           <button onClick={() => deleteTask(task.id)} className="p-0.5 text-red-300 hover:text-red-500"><Trash2 size={12} /></button>
                         </div>
+                        {task.description && <p className="text-xs text-gray-500 mb-1 line-clamp-2">{task.description}</p>}
                         {task.assigned_name && <p className="text-xs text-gray-500 mb-1">{task.assigned_name}</p>}
                         {task.milestone_title && <p className="text-xs text-primary-500 mb-2">{task.milestone_title}</p>}
                         <div className="flex items-center justify-between">
@@ -404,18 +384,31 @@ export default function ProjectDetail() {
         <div className="space-y-4">
           <div className="glass p-4">
             <div className="flex gap-2">
+              <select value={noteCategory} onChange={(e) => setNoteCategory(e.target.value)} className="px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-w-[140px]">
+                {NOTE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
               <input type="text" value={noteText} onChange={(e) => setNoteText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
                 placeholder="Add a note or update..." className="flex-1 px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
               <button onClick={handleAddNote} className="p-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600"><Send size={16} /></button>
             </div>
           </div>
-          {notes.length === 0 ? (
-            <div className="glass p-8 text-center text-gray-500">No notes yet</div>
+          {/* Category filter */}
+          <div className="flex gap-1.5 flex-wrap">
+            <button onClick={() => setNoteFilter('')} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${noteFilter === '' ? 'bg-primary-500 text-white' : 'bg-white/60 text-gray-500 hover:bg-white'}`}>All</button>
+            {NOTE_CATEGORIES.map(c => (
+              <button key={c} onClick={() => setNoteFilter(c)} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${noteFilter === c ? 'bg-primary-500 text-white' : 'bg-white/60 text-gray-500 hover:bg-white'}`}>{c}</button>
+            ))}
+          </div>
+          {(noteFilter ? notes.filter(n => n.category === noteFilter) : notes).length === 0 ? (
+            <div className="glass p-8 text-center text-gray-500">{noteFilter ? `No ${noteFilter} notes` : 'No notes yet'}</div>
           ) : (
-            notes.map(note => (
+            (noteFilter ? notes.filter(n => n.category === noteFilter) : notes).map(note => (
               <div key={note.id} className="glass-card p-4">
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${NOTE_CATEGORY_COLORS[note.category] || NOTE_CATEGORY_COLORS['General']}`}>{note.category || 'General'}</span>
+                    </div>
                     <p className="text-sm text-gray-700">{note.note}</p>
                     <p className="text-xs text-gray-400 mt-1">{note.user_name} &middot; {new Date(note.created_at).toLocaleString()}</p>
                   </div>
@@ -460,6 +453,7 @@ export default function ProjectDetail() {
         {editingMilestone && (
           <form onSubmit={handleEditMilestone} className="space-y-4">
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Phase Name</label><input type="text" value={editingMilestone.title} onChange={(e) => setEditingMilestone({ ...editingMilestone, title: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
+            <div><label className="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea value={editingMilestone.description || ''} onChange={(e) => setEditingMilestone({ ...editingMilestone, description: e.target.value })} rows={2} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Weight (%)</label><input type="number" min="0" max="100" value={editingMilestone.weight} onChange={(e) => setEditingMilestone({ ...editingMilestone, weight: Number(e.target.value) || 0 })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
             <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditingMilestone(null)} className="px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-100 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-700 text-white text-sm rounded-xl font-medium">Save</button></div>
           </form>
@@ -470,6 +464,7 @@ export default function ProjectDetail() {
       <Modal isOpen={taskOpen} onClose={() => setTaskOpen(false)} title="Add Task" size="sm">
         <form onSubmit={handleAddTask} className="space-y-4">
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Title *</label><input type="text" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} rows={2} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" placeholder="Details about this task..." /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Milestone</label><select value={taskForm.milestone_id} onChange={(e) => setTaskForm({ ...taskForm, milestone_id: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"><option value="">None</option>{milestones.map(ms => <option key={ms.id} value={ms.id}>{ms.title}</option>)}</select></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label><select value={taskForm.assigned_to} onChange={(e) => setTaskForm({ ...taskForm, assigned_to: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"><option value="">Unassigned</option>{staffList.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></div>

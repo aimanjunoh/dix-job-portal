@@ -1074,9 +1074,9 @@ export const api = {
     },
 
     // Notes
-    addNote: async (projectId: number, note: string) => {
+    addNote: async (projectId: number, note: string, category: string = 'General') => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data, error } = await supabase.from('project_notes').insert({ project_id: projectId, user_id: user?.id, note }).select('*, users(name)').single();
+      const { data, error } = await supabase.from('project_notes').insert({ project_id: projectId, user_id: user?.id, note, category }).select('*, users(name)').single();
       if (error) throw error;
       return { note: { ...data, user_name: data?.users?.name || null, users: undefined } };
     },
