@@ -247,7 +247,7 @@ export default function Dashboard() {
                           )}
                           {req.possible_duplicate_of && (
                             <span className="flex items-center gap-1 text-xs text-purple-600 font-semibold bg-purple-50 px-1.5 py-0.5 rounded-full">
-                              <Copy size={10} /> Possible duplicate of {req.possible_duplicate_of}
+                              <Copy size={10} /> Possible follow-up of {req.possible_duplicate_of}
                             </span>
                           )}
                           {req.remarks && req.remarks.includes('thread reply') && (
@@ -312,7 +312,7 @@ export default function Dashboard() {
                       <p className="text-xs text-gray-500 font-mono">{req.request_id}</p>
                       {req.possible_duplicate_of && (
                         <span className="flex items-center gap-1 text-xs text-purple-600 font-semibold bg-purple-50 px-1.5 py-0.5 rounded-full">
-                          <Copy size={10} /> Duplicate?
+                          <Copy size={10} /> Follow-up?
                         </span>
                       )}
                     </div>

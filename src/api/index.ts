@@ -401,17 +401,26 @@ export const api = {
         users: undefined,
       }));
 
-      // Duplicate detection: flag requests from the same email within 30 minutes
-      const DUPLICATE_WINDOW_MS = 30 * 60 * 1000;
+      // Follow-up / duplicate detection: flag requests from the same email with same title or thread reply
+      const normalizeTitle = (t: string) => t.replace(/^(Re|Fw|Fwd):\s*/gi, '').trim().toLowerCase();
       const detectDuplicate = (req: any): string | null => {
         if (!req.requester_email) return null;
+        // Already linked — skip auto-detection
+        if (req.related_request_id) return null;
+        const reqTitle = normalizeTitle(req.title || '');
         const reqCreated = new Date(req.created_at).getTime();
-        const earlier = requests.find((r: any) =>
-          r.id !== req.id &&
-          r.requester_email === req.requester_email &&
-          new Date(r.created_at).getTime() < reqCreated &&
-          (reqCreated - new Date(r.created_at).getTime()) <= DUPLICATE_WINDOW_MS
-        );
+        const DUPLICATE_WINDOW_MS = 30 * 60 * 1000;
+        const isThreadReply = req.remarks && req.remarks.includes('thread reply');
+        const earlier = requests.find((r: any) => {
+          if (r.id === req.id) return false;
+          if (r.requester_email !== req.requester_email) return false;
+          const rCreated = new Date(r.created_at).getTime();
+          if (rCreated >= reqCreated) return false;
+          if (normalizeTitle(r.title || '') === reqTitle && reqTitle.length > 0) return true;
+          if (isThreadReply) return true;
+          if ((reqCreated - rCreated) <= DUPLICATE_WINDOW_MS) return true;
+          return false;
+        });
         return earlier ? earlier.request_id : null;
       };
 
@@ -546,6 +555,19 @@ export const api = {
       };
     },
 
+    // Lightweight search for linking dropdown
+    searchForLinking: async (query: string, excludeId?: number) => {
+      let q = supabase
+        .from('requests')
+        .select('id, request_id, title, requester_name, status')
+        .or(`request_id.ilike.%${query}%,title.ilike.%${query}%`)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (excludeId) q = q.neq('id', excludeId);
+      const { data } = await q;
+      return data || [];
+    },
+
     create: async (requestData: any) => {
       const request_id = await generateRequestId();
       const action_token = generateToken();
@@ -641,6 +663,7 @@ export const api = {
       }
 
       if (requestData.due_date !== undefined) updateData.due_date = requestData.due_date || null;
+      if (requestData.related_request_id !== undefined) updateData.related_request_id = requestData.related_request_id || null;
 
       // --- SLA Pause/Resume Logic ---
       if (requestData.status !== undefined && requestData.status !== existing.status) {
@@ -696,6 +719,15 @@ export const api = {
 
       const { data: { user } } = await supabase.auth.getUser();
       const token = data.action_token || existing.action_token;
+
+      // Log related request changes
+      if (requestData.related_request_id !== undefined && requestData.related_request_id !== existing.related_request_id) {
+        if (requestData.related_request_id) {
+          await logActivity(id, 'Linked', user?.email || 'System', `Linked to another request`);
+        } else {
+          await logActivity(id, 'Unlinked', user?.email || 'System', 'Removed link to related request');
+        }
+      }
 
       // Get status history for email
       const { data: historyLogs } = await supabase

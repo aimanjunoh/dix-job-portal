@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/shared/StatusBadge';
-import { ArrowLeft, Clock, User, Mail, Tag, AlertTriangle, MessageSquare, Edit2 } from 'lucide-react';
+import { ArrowLeft, Clock, User, Mail, Tag, AlertTriangle, MessageSquare, Edit2, Link, Unlink, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const STATUSES = ['New', 'In Progress', 'Pending Info', 'Completed'];
@@ -19,6 +19,10 @@ export default function RequestDetail() {
   const [editing, setEditing] = useState(false);
   const [staffList, setStaffList] = useState<any[]>([]);
   const [form, setForm] = useState({ status: '', remarks: '', assigned_to: '', urgency: '' });
+  const [linking, setLinking] = useState(false);
+  const [linkSearch, setLinkSearch] = useState('');
+  const [linkResults, setLinkResults] = useState<any[]>([]);
+  const [relatedRequest, setRelatedRequest] = useState<any>(null);
 
   useEffect(() => {
     loadData();
@@ -36,6 +40,17 @@ export default function RequestDetail() {
         assigned_to: data.request.assigned_to ? String(data.request.assigned_to) : '',
         urgency: data.request.urgency
       });
+      // Load related request info if linked
+      if (data.request.related_request_id) {
+        try {
+          const related = await api.requests.get(data.request.related_request_id);
+          setRelatedRequest(related.request);
+        } catch {
+          setRelatedRequest(null);
+        }
+      } else {
+        setRelatedRequest(null);
+      }
     } catch (err: any) {
       toast.error('Request not found');
       navigate('/requests');
@@ -55,6 +70,44 @@ export default function RequestDetail() {
       loadData();
     } catch (err: any) {
       toast.error(err.message);
+    }
+  };
+
+  const handleSearchForLinking = async (query: string) => {
+    setLinkSearch(query);
+    if (query.length < 2) {
+      setLinkResults([]);
+      return;
+    }
+    try {
+      const results = await api.requests.searchForLinking(query, Number(id));
+      setLinkResults(results);
+    } catch {
+      setLinkResults([]);
+    }
+  };
+
+  const handleLinkRequest = async (relatedId: number) => {
+    try {
+      await api.requests.update(Number(id), { related_request_id: relatedId });
+      toast.success('Requests linked');
+      setLinking(false);
+      setLinkSearch('');
+      setLinkResults([]);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to link requests');
+    }
+  };
+
+  const handleUnlinkRequest = async () => {
+    try {
+      await api.requests.update(Number(id), { related_request_id: null });
+      toast.success('Requests unlinked');
+      setRelatedRequest(null);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to unlink requests');
     }
   };
 
@@ -80,15 +133,74 @@ export default function RequestDetail() {
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               request.urgency === 'Critical' ? 'urgency-critical' : request.urgency === 'Urgent' ? 'urgency-urgent' : 'urgency-normal'
             }`}>{request.urgency}</span>
+            {relatedRequest && (
+              <span
+                className="flex items-center gap-1 text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full font-medium cursor-pointer hover:bg-indigo-200"
+                onClick={() => navigate(`/requests/${relatedRequest.id}`)}
+                title={`Linked to: ${relatedRequest.title}`}
+              >
+                <Link size={10} /> Related: {relatedRequest.request_id}
+              </span>
+            )}
           </div>
           <p className="text-white/70 text-sm mt-1">{request.title}</p>
         </div>
+        {!isGuest && isAdmin && (
+          <div className="relative">
+            {request.related_request_id ? (
+              <button onClick={handleUnlinkRequest} className="flex items-center gap-2 px-3 py-2 bg-white/90 text-gray-600 rounded-xl text-sm font-medium hover:shadow-lg transition-all" title="Unlink request">
+                <Unlink size={14} /> Unlink
+              </button>
+            ) : (
+              <button onClick={() => setLinking(!linking)} className="flex items-center gap-2 px-3 py-2 bg-white/90 text-primary-600 rounded-xl text-sm font-medium hover:shadow-lg transition-all">
+                <Link size={14} /> Link
+              </button>
+            )}
+          </div>
+        )}
         {!isGuest && (
           <button onClick={() => setEditing(!editing)} className="flex items-center gap-2 px-4 py-2 bg-white text-primary-600 rounded-xl text-sm font-medium hover:shadow-lg transition-all">
             <Edit2 size={14} /> {editing ? 'Cancel' : 'Edit'}
           </button>
         )}
       </div>
+
+      {/* Link Request Panel */}
+      {linking && (
+        <div className="glass p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Search size={16} className="text-primary-500" />
+            <span className="text-sm font-medium text-gray-700">Search for a request to link</span>
+            <button onClick={() => { setLinking(false); setLinkSearch(''); setLinkResults([]); }} className="ml-auto text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+          </div>
+          <input
+            type="text"
+            placeholder="Search by REQ-ID or title..."
+            value={linkSearch}
+            onChange={(e) => handleSearchForLinking(e.target.value)}
+            className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm mb-3"
+            autoFocus
+          />
+          {linkResults.length > 0 && (
+            <div className="max-h-48 overflow-y-auto space-y-2">
+              {linkResults.map((r: any) => (
+                <div
+                  key={r.id}
+                  onClick={() => handleLinkRequest(r.id)}
+                  className="flex items-center gap-3 p-2 bg-white/50 rounded-lg cursor-pointer hover:bg-primary-50 transition-colors"
+                >
+                  <span className="text-xs font-mono text-gray-500">{r.request_id}</span>
+                  <span className="text-sm text-gray-800 truncate flex-1">{r.title}</span>
+                  <StatusBadge status={r.status} />
+                </div>
+              ))}
+            </div>
+          )}
+          {linkSearch.length >= 2 && linkResults.length === 0 && (
+            <p className="text-xs text-gray-500 text-center py-2">No matching requests found</p>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Details */}
