@@ -29,6 +29,10 @@ export default function RequestDetail() {
     api.users.all().then(d => setStaffList(d.users)).catch(() => {});
   }, [id]);
 
+  useEffect(() => {
+    if (request) document.title = `Request ${request.request_id} — DIX Portal`;
+  }, [request]);
+
   const loadData = async () => {
     try {
       const data = await api.requests.get(Number(id));
@@ -124,7 +128,7 @@ export default function RequestDetail() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <button onClick={() => navigate('/requests')} className="p-2 glass-card hover:bg-white/90">
-          <ArrowLeft size={18} className="text-gray-600" />
+          <ArrowLeft size={18} className="text-gray-600 dark:text-gray-400" />
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
@@ -135,7 +139,7 @@ export default function RequestDetail() {
             }`}>{request.urgency}</span>
             {relatedRequest && (
               <span
-                className="flex items-center gap-1 text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full font-medium cursor-pointer hover:bg-indigo-200"
+                className="flex items-center gap-1 text-xs px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 rounded-full font-medium cursor-pointer hover:bg-indigo-200"
                 onClick={() => navigate(`/requests/${relatedRequest.id}`)}
                 title={`Linked to: ${relatedRequest.title}`}
               >
@@ -148,7 +152,7 @@ export default function RequestDetail() {
         {!isGuest && isAdmin && (
           <div className="relative">
             {request.related_request_id ? (
-              <button onClick={handleUnlinkRequest} className="flex items-center gap-2 px-3 py-2 bg-white/90 text-gray-600 rounded-xl text-sm font-medium hover:shadow-lg transition-all" title="Unlink request">
+              <button onClick={handleUnlinkRequest} className="flex items-center gap-2 px-3 py-2 bg-white/90 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-medium hover:shadow-lg transition-all" title="Unlink request">
                 <Unlink size={14} /> Unlink
               </button>
             ) : (
@@ -170,15 +174,15 @@ export default function RequestDetail() {
         <div className="glass p-4">
           <div className="flex items-center gap-2 mb-3">
             <Search size={16} className="text-primary-500" />
-            <span className="text-sm font-medium text-gray-700">Search for a request to link</span>
-            <button onClick={() => { setLinking(false); setLinkSearch(''); setLinkResults([]); }} className="ml-auto text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Search for a request to link</span>
+            <button onClick={() => { setLinking(false); setLinkSearch(''); setLinkResults([]); }} className="ml-auto text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Cancel</button>
           </div>
           <input
             type="text"
             placeholder="Search by REQ-ID or title..."
             value={linkSearch}
             onChange={(e) => handleSearchForLinking(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm mb-3"
+            className="w-full px-4 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm mb-3"
             autoFocus
           />
           {linkResults.length > 0 && (
@@ -187,17 +191,17 @@ export default function RequestDetail() {
                 <div
                   key={r.id}
                   onClick={() => handleLinkRequest(r.id)}
-                  className="flex items-center gap-3 p-2 bg-white/50 rounded-lg cursor-pointer hover:bg-primary-50 transition-colors"
+                  className="flex items-center gap-3 p-2 bg-white/50 dark:bg-white/5 rounded-lg cursor-pointer hover:bg-primary-50 transition-colors"
                 >
-                  <span className="text-xs font-mono text-gray-500">{r.request_id}</span>
-                  <span className="text-sm text-gray-800 truncate flex-1">{r.title}</span>
+                  <span className="text-xs font-mono text-gray-500 dark:text-gray-400">{r.request_id}</span>
+                  <span className="text-sm text-gray-800 dark:text-gray-200 truncate flex-1">{r.title}</span>
                   <StatusBadge status={r.status} />
                 </div>
               ))}
             </div>
           )}
           {linkSearch.length >= 2 && linkResults.length === 0 && (
-            <p className="text-xs text-gray-500 text-center py-2">No matching requests found</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">No matching requests found</p>
           )}
         </div>
       )}
@@ -205,81 +209,81 @@ export default function RequestDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Details */}
         <div className="lg:col-span-2 glass p-5 space-y-4">
-          <h2 className="text-lg font-bold text-gray-800">Request Details</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">Request Details</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-start gap-3">
-              <User size={16} className="text-gray-400 mt-0.5" />
+              <User size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
               <div>
-                <p className="text-xs text-gray-500">Requester</p>
-                <p className="text-sm font-medium text-gray-800">{request.requester_name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Requester</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{request.requester_name}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Mail size={16} className="text-gray-400 mt-0.5" />
+              <Mail size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
               <div>
-                <p className="text-xs text-gray-500">Email</p>
-                <p className="text-sm text-gray-800">{request.requester_email || '-'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Email</p>
+                <p className="text-sm text-gray-800 dark:text-gray-200">{request.requester_email || '-'}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Tag size={16} className="text-gray-400 mt-0.5" />
+              <Tag size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
               <div>
-                <p className="text-xs text-gray-500">Department / Category</p>
-                <p className="text-sm text-gray-800">{request.department || '-'} / {request.category || '-'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Department / Category</p>
+                <p className="text-sm text-gray-800 dark:text-gray-200">{request.department || '-'} / {request.category || '-'}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <User size={16} className="text-gray-400 mt-0.5" />
+              <User size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
               <div>
-                <p className="text-xs text-gray-500">Assigned To</p>
-                <p className="text-sm font-medium text-gray-800">{request.assigned_name || <span className="status-unassigned px-2 py-0.5 rounded-full text-xs">Unassigned</span>}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Assigned To</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{request.assigned_name || <span className="status-unassigned px-2 py-0.5 rounded-full text-xs">Unassigned</span>}</p>
               </div>
             </div>
           </div>
 
           {request.description && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">Description</p>
-              <p className="text-sm text-gray-700 bg-white/40 rounded-xl p-3">{request.description}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Description</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 bg-white/40 rounded-xl p-3">{request.description}</p>
             </div>
           )}
 
           {request.remarks && !editing && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">Remarks</p>
-              <p className="text-sm text-gray-700 bg-white/40 rounded-xl p-3">{request.remarks}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Remarks</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 bg-white/40 rounded-xl p-3">{request.remarks}</p>
             </div>
           )}
 
           {/* Edit Form */}
           {editing && (
-            <form onSubmit={handleUpdate} className="border-t border-gray-200/50 pt-4 space-y-4">
+            <form onSubmit={handleUpdate} className="border-t border-gray-200 dark:border-gray-700/50 pt-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
                     {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
-                  <select value={form.urgency} onChange={(e) => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Urgency</label>
+                  <select value={form.urgency} onChange={(e) => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
                     {URGENCIES.map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
                 </div>
                 {isAdmin && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
-                    <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned To</label>
+                    <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
                       <option value="">Unassigned</option>
                       {staffList.map((u: any) => <option key={u.id} value={u.id}>{u.name} ({u.department})</option>)}
                     </select>
                   </div>
                 )}
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
-                  <textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} rows={3} className="w-full px-3 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</label>
+                  <textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} rows={3} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" />
                 </div>
               </div>
               <div className="flex justify-end">
@@ -288,7 +292,7 @@ export default function RequestDetail() {
             </form>
           )}
 
-          <div className="text-xs text-gray-400 flex gap-4">
+          <div className="text-xs text-gray-400 dark:text-gray-500 flex gap-4">
             <span>Created: {new Date(request.created_at).toLocaleString()}</span>
             <span>Updated: {new Date(request.updated_at).toLocaleString()}</span>
           </div>
@@ -296,20 +300,20 @@ export default function RequestDetail() {
 
         {/* Activity Timeline */}
         <div className="glass p-5">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
             <Clock size={18} className="text-primary-500" /> Activity Log
           </h2>
           <div className="space-y-3 max-h-[500px] overflow-y-auto">
             {activities.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-4">No activity recorded</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">No activity recorded</p>
             ) : (
               activities.map((act: any) => (
                 <div key={act.id} className="flex gap-3">
                   <div className="w-2 h-2 bg-primary-400 rounded-full mt-2 flex-shrink-0"></div>
                   <div>
-                    <p className="text-sm text-gray-800 font-medium">{act.action}</p>
-                    <p className="text-xs text-gray-500">{act.details}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{act.performed_by} · {new Date(act.timestamp).toLocaleString()}</p>
+                    <p className="text-sm text-gray-800 dark:text-gray-200 font-medium">{act.action}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{act.details}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{act.performed_by} · {new Date(act.timestamp).toLocaleString()}</p>
                   </div>
                 </div>
               ))

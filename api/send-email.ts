@@ -109,7 +109,7 @@ function buildNewRequestEmail(data: any): string {
 
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
-      <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 24px; border-radius: 16px 16px 0 0;">
+      <div style="background: linear-gradient(135deg, #6366f1, #4f46e5); padding: 24px; border-radius: 16px 16px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 20px;">New Job Request</h1>
         <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">${request_id} requires your attention</p>
       </div>
@@ -150,7 +150,7 @@ function buildAssignmentEmail(data: any): string {
           ${due_date ? `<tr><td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Due Date</td><td style="padding: 8px 0; font-size: 14px; font-weight: 600; color: #dc2626;">${due_date}</td></tr>` : ''}
         </table>
         <div style="margin-top: 24px;">
-          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
+          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #6366f1; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
         </div>
       </div>
     </div>
@@ -196,7 +196,7 @@ function buildReassignedEmail(data: any): string {
       <div style="background: white; padding: 24px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
         <p style="font-size: 14px; color: #374151;">Request <strong>${request_id}</strong> — <strong>${title}</strong> has been assigned to someone else.</p>
         <div style="margin-top: 16px;">
-          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
+          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #6366f1; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
         </div>
       </div>
     </div>
@@ -218,7 +218,7 @@ function buildStatusChangeEmail(data: any): string {
         ${remarks ? `<div style="margin-top: 8px; padding: 10px; background: #f9fafb; border-radius: 8px; font-size: 13px; color: #374151;"><strong>Remarks:</strong> ${remarks}</div>` : ''}
         ${historyHtml(history)}
         <div style="margin-top: 24px;">
-          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
+          <a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #6366f1; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">View Request</a>
         </div>
       </div>
     </div>
@@ -350,7 +350,7 @@ function buildDailyDigestEmail(data: any): string {
 
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
-      <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 24px; border-radius: 16px 16px 0 0;">
+      <div style="background: linear-gradient(135deg, #3730a3, #6366f1); padding: 24px; border-radius: 16px 16px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 20px;">📋 Daily Digest</h1>
         <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 14px;">${today}</p>
       </div>
@@ -419,7 +419,7 @@ function buildDailyDigestEmail(data: any): string {
         </div>` : ''}
 
         <div style="margin-top: 20px; text-align: center;">
-          <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">Open Dashboard</a>
+          <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background: #6366f1; color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">Open Dashboard</a>
         </div>
       </div>
     </div>

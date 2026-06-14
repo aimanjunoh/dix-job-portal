@@ -1,9 +1,10 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Eye, EyeOff, EyeIcon } from 'lucide-react';
+import { Eye, EyeOff, EyeIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Login() {
+  useEffect(() => { document.title = 'Login — DIX Portal'; }, []);
   const { login, signup, guestLogin } = useAuth();
   const [isSignup, setIsSignup] = useState(false);
   const [name, setName] = useState('');
@@ -36,39 +37,36 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-primary-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/30">
-            <Shield className="text-white" size={32} />
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-1">DIX Job Portal</h1>
-          <p className="text-white/70">Digital Innovation & Experience</p>
+          <img src="/dix-logo.png" alt="DIX - Digital Innovation & Experience Unit" className="h-24 mx-auto mb-4 drop-shadow-lg" />
+          <p className="text-white/50 text-xs tracking-widest uppercase">Operational Portal</p>
         </div>
 
-        <div className="glass-dark p-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">{isSignup ? 'Create Account' : 'Sign In'}</h2>
+        <div className="glass-dark p-8 border-t-4 border-primary-500">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-6">{isSignup ? 'Create Account' : 'Sign In'}</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignup && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
                 <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                  className="w-full px-4 py-3 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
                   placeholder="Your name" required />
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                className="w-full px-4 py-3 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
                 placeholder="admin@dix.local" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
               <div className="relative">
                 <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all pr-12"
+                  className="w-full px-4 py-3 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all pr-12"
                   placeholder="Enter password" required minLength={6} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
@@ -86,7 +84,7 @@ export default function Login() {
           </div>
 
           {!isSignup && (
-            <div className="mt-4 pt-4 border-t border-gray-200/50">
+            <div className="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
               <button
                 onClick={async () => {
                   setGuestLoading(true);
@@ -104,7 +102,7 @@ export default function Login() {
                   }
                 }}
                 disabled={guestLoading}
-                className="w-full py-3 bg-white/60 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-white/80 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-white/80 dark:hover:bg-white/10 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <EyeIcon size={18} />
                 {guestLoading ? 'Loading...' : 'Guest Preview (Read-Only)'}

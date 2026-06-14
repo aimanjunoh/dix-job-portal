@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useTheme } from './components/shared/ThemeToggle';
 import Layout from './components/Layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -12,6 +13,7 @@ import QuickAction from './pages/QuickAction';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
 import Insights from './pages/Insights';
+import NotFound from './pages/NotFound';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -45,12 +47,13 @@ function AppRoutes() {
         <Route path="projects/:id" element={<ProjectDetail />} />
         <Route path="insights" element={<Insights />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
 export default function App() {
+  useTheme(); // Initialize theme on <html> from localStorage
   return (
     <BrowserRouter>
       <AuthProvider>

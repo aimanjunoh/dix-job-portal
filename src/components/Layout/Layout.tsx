@@ -25,7 +25,7 @@ export default function Layout() {
           <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-white/50 rounded-lg">
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <h1 className="text-lg font-semibold text-gray-800">DIX Portal</h1>
+          <img src="/dix-logo.png" alt="DIX" className="h-6 object-contain" />
         </div>
 
         {/* Page content */}

@@ -3,6 +3,7 @@ import { api } from '../api';
 import { Activity, Clock, User } from 'lucide-react';
 
 export default function Activities() {
+  useEffect(() => { document.title = 'Activity Logs — DIX Portal'; }, []);
   const [activities, setActivities] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -28,7 +29,7 @@ export default function Activities() {
 
   const getActionColor = (action: string) => {
     if (action.includes('Created')) return 'bg-green-400';
-    if (action.includes('Updated')) return 'bg-blue-400';
+    if (action.includes('Updated')) return 'bg-primary-400';
     if (action.includes('Deleted')) return 'bg-red-400';
     if (action.includes('Assigned')) return 'bg-purple-400';
     if (action.includes('Status')) return 'bg-yellow-400';
@@ -44,9 +45,9 @@ export default function Activities() {
 
       <div className="glass p-5">
         {loading ? (
-          <div className="text-center py-8 text-gray-500">Loading...</div>
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">Loading...</div>
         ) : activities.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">No activities recorded</div>
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">No activities recorded</div>
         ) : (
           <div className="space-y-4">
             {activities.map((act: any) => (
@@ -54,14 +55,14 @@ export default function Activities() {
                 <div className={`w-3 h-3 ${getActionColor(act.action)} rounded-full mt-1.5 flex-shrink-0`}></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                    <p className="text-sm font-medium text-gray-800">{act.action}</p>
-                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{act.action}</p>
+                    <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
                       <Clock size={12} />
                       {new Date(act.timestamp).toLocaleString()}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">{act.details}</p>
-                  <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{act.details}</p>
+                  <div className="flex items-center gap-1 mt-1 text-xs text-gray-400 dark:text-gray-500">
                     <User size={12} />
                     {act.performed_by}
                     {act.request_id && <span>· Request #{act.request_id}</span>}
@@ -74,10 +75,10 @@ export default function Activities() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200/50">
-            <p className="text-xs text-gray-500">Page {page} of {totalPages}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Page {page} of {totalPages}</p>
             <div className="flex gap-1">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 text-xs bg-white/60 rounded-lg disabled:opacity-50 hover:bg-white/80">Prev</button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1.5 text-xs bg-white/60 rounded-lg disabled:opacity-50 hover:bg-white/80">Next</button>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 text-xs bg-white/60 dark:bg-gray-800/60 rounded-lg disabled:opacity-50 hover:bg-white/80 dark:hover:bg-white/10">Prev</button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1.5 text-xs bg-white/60 dark:bg-gray-800/60 rounded-lg disabled:opacity-50 hover:bg-white/80 dark:hover:bg-white/10">Next</button>
             </div>
           </div>
         )}

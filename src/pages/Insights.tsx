@@ -29,6 +29,7 @@ const TABS = [
 type TabKey = (typeof TABS)[number]['key'];
 
 export default function Insights() {
+  useEffect(() => { document.title = 'Insights — DIX Portal'; }, []);
   const { isGuest } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>('requests');
   const [requests, setRequests] = useState<EnrichedRequest[]>([]);

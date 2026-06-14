@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Shield, CheckCircle, XCircle, ExternalLink, Loader } from 'lucide-react';
+import { CheckCircle, XCircle, ExternalLink, Loader } from 'lucide-react';
 
 type ActionStatus = 'loading' | 'success' | 'error' | 'login_required';
 
 export default function QuickAction() {
+  useEffect(() => { document.title = 'Quick Action — DIX Portal'; }, []);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
@@ -118,11 +119,8 @@ export default function QuickAction() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-primary-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/30">
-            <Shield className="text-white" size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-1">DIX Job Portal</h1>
-          <p className="text-white/70">Quick Action</p>
+          <img src="/dix-logo.png" alt="DIX" className="h-20 mx-auto mb-4 drop-shadow-lg" />
+          <p className="text-white/50 text-xs tracking-widest uppercase">Quick Action</p>
         </div>
 
         <div className="glass-dark p-8">
@@ -167,7 +165,7 @@ export default function QuickAction() {
 
           {status === 'login_required' && (
             <div className="text-center py-4">
-              <Shield className="w-16 h-16 text-primary-500 mx-auto mb-4" />
+              <img src="/dix-logo.png" alt="DIX" className="w-16 h-16 object-contain mx-auto mb-4" />
               <h2 className="text-xl font-bold text-gray-800 mb-2">Sign In Required</h2>
               <p className="text-gray-600 mb-6">{message}</p>
               {requestInfo && (
