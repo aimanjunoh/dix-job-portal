@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
 import { Activity, Clock, User } from 'lucide-react';
+import { formatRelativeTime } from '../utils/timeFormat';
 
 export default function Activities() {
   useEffect(() => { document.title = 'Activity Logs — DIX Portal'; }, []);
@@ -39,8 +40,8 @@ export default function Activities() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">Activity Logs</h1>
-        <p className="text-white/70">{total} total activities</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Activity Logs</h1>
+        <p className="text-gray-500 dark:text-gray-400">{total} total activities</p>
       </div>
 
       <div className="glass p-5">
@@ -51,14 +52,14 @@ export default function Activities() {
         ) : (
           <div className="space-y-4">
             {activities.map((act: any) => (
-              <div key={act.id} className="flex gap-4 items-start">
-                <div className={`w-3 h-3 ${getActionColor(act.action)} rounded-full mt-1.5 flex-shrink-0`}></div>
+              <div key={act.id} className="flex gap-4 items-start pb-4 border-b border-gray-50 dark:border-gray-800/30 last:border-0 last:pb-0">
+                <div className={`w-2.5 h-2.5 ${getActionColor(act.action)} rounded-full mt-1.5 flex-shrink-0`}></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{act.action}</p>
                     <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
                       <Clock size={12} />
-                      {new Date(act.timestamp).toLocaleString()}
+                      {formatRelativeTime(act.timestamp)}
                     </div>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{act.details}</p>
@@ -77,8 +78,8 @@ export default function Activities() {
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200/50">
             <p className="text-xs text-gray-500 dark:text-gray-400">Page {page} of {totalPages}</p>
             <div className="flex gap-1">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 text-xs bg-white/60 dark:bg-gray-800/60 rounded-lg disabled:opacity-50 hover:bg-white/80 dark:hover:bg-white/10">Prev</button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1.5 text-xs bg-white/60 dark:bg-gray-800/60 rounded-lg disabled:opacity-50 hover:bg-white/80 dark:hover:bg-white/10">Next</button>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800/60 rounded-lg disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700/80">Prev</button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800/60 rounded-lg disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700/80">Next</button>
             </div>
           </div>
         )}

@@ -119,11 +119,11 @@ export default function QuickAction() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="/dix-logo.png" alt="DIX" className="h-20 mx-auto mb-4 drop-shadow-lg" />
-          <p className="text-white/50 text-xs tracking-widest uppercase">Quick Action</p>
+          <img src="/dix-logo.svg" alt="DIX" className="h-16 mx-auto mb-4" />
+          <p className="text-gray-400 dark:text-gray-500 text-xs tracking-widest uppercase">Quick Action</p>
         </div>
 
-        <div className="glass-dark p-8">
+        <div className="bg-white dark:bg-[#16162a] border border-gray-100 dark:border-gray-800/60 p-8 rounded-2xl shadow-lg">
           {status === 'loading' && (
             <div className="text-center py-6">
               <Loader className="animate-spin w-10 h-10 text-primary-500 mx-auto mb-4" />
@@ -145,7 +145,7 @@ export default function QuickAction() {
                 </div>
               )}
               <div className="flex gap-3">
-                <button onClick={() => navigate('/requests')} className="flex-1 py-3 bg-gradient-to-r from-primary-500 to-primary-700 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                <button onClick={() => navigate('/requests')} className="flex-1 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2">
                   <ExternalLink size={16} /> View All Requests
                 </button>
               </div>
@@ -157,7 +157,7 @@ export default function QuickAction() {
               <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-gray-800 mb-2">Action Failed</h2>
               <p className="text-gray-600 mb-6">{message}</p>
-              <button onClick={() => navigate('/')} className="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-700 text-white rounded-xl font-medium hover:shadow-lg transition-all">
+              <button onClick={() => navigate('/')} className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors">
                 Go to Dashboard
               </button>
             </div>
@@ -165,7 +165,7 @@ export default function QuickAction() {
 
           {status === 'login_required' && (
             <div className="text-center py-4">
-              <img src="/dix-logo.png" alt="DIX" className="w-16 h-16 object-contain mx-auto mb-4" />
+              <img src="/dix-logo.svg" alt="DIX" className="w-16 h-16 object-contain mx-auto mb-4" />
               <h2 className="text-xl font-bold text-gray-800 mb-2">Sign In Required</h2>
               <p className="text-gray-600 mb-6">{message}</p>
               {requestInfo && (
@@ -174,7 +174,7 @@ export default function QuickAction() {
                   <p className="font-bold text-gray-800">{requestInfo.request_id} — {requestInfo.title}</p>
                 </div>
               )}
-              <button onClick={() => navigate(`/login?redirect=/action?token=${token}&action=${action}`)} className="w-full py-3 bg-gradient-to-r from-primary-500 to-primary-700 text-white rounded-xl font-medium hover:shadow-lg transition-all">
+              <button onClick={() => navigate(`/login?redirect=/action?token=${token}&action=${action}`)} className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors">
                 Sign In to Continue
               </button>
             </div>

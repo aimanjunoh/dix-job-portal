@@ -163,11 +163,11 @@ export default function Requests() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Job Requests</h1>
-          <p className="text-white/70">{total} total requests</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Job Requests</h1>
+          <p className="text-gray-500 dark:text-gray-400">{total} total requests</p>
         </div>
         {isAdmin && (
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-white text-primary-600 rounded-xl font-medium hover:shadow-lg transition-all text-sm">
+          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors text-sm">
             <Plus size={16} /> New Request
           </button>
         )}
@@ -180,10 +180,10 @@ export default function Requests() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input type="text" placeholder="Search by ID, title, requester, department..." value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
+              className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
           </div>
           <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="px-4 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
             <option value="">All Status</option>
             {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
@@ -207,7 +207,7 @@ export default function Requests() {
             </label>
           )}
           <select value={slaFilter} onChange={(e) => { setSlaFilter(e.target.value); setPage(1); }}
-            className="px-3 py-1.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
             <option value="">All SLA</option>
             <option value="Within SLA">Within SLA</option>
             <option value="Approaching SLA">Approaching SLA</option>
@@ -222,7 +222,7 @@ export default function Requests() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200/50">
+              <tr className="border-b border-gray-100 dark:border-gray-800/50">
                 <th onClick={() => handleSort('request_id')} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200">ID<SortIcon col="request_id" /></th>
                 <th onClick={() => handleSort('title')} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200">Title<SortIcon col="title" /></th>
                 <th onClick={() => handleSort('requester_name')} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 hidden md:table-cell">Requester<SortIcon col="requester_name" /></th>
@@ -240,7 +240,7 @@ export default function Requests() {
                 <tr><td colSpan={8} className="text-center py-8 text-gray-500">No requests found</td></tr>
               ) : (
                 sortedRequests.map((req: any) => (
-                  <tr key={req.id} onClick={() => navigate(`/requests/${req.id}`)} className="border-b border-gray-100/50 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-white/5 cursor-pointer transition-colors">
+                  <tr key={req.id} onClick={() => navigate(`/requests/${req.id}`)} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-white/[0.03] cursor-pointer transition-colors">
                     <td className="px-4 py-3 text-xs font-mono text-gray-500">{req.request_id}</td>
                     <td className="px-4 py-3">
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate max-w-[200px]">{req.title}</p>
@@ -296,7 +296,7 @@ export default function Requests() {
             </p>
             <div className="flex items-center gap-1">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-2.5 py-1.5 text-xs bg-white/60 dark:bg-gray-800/60 rounded-lg disabled:opacity-40 hover:bg-white/80 dark:hover:bg-gray-700/80 transition-colors">Prev</button>
+                className="px-2.5 py-1.5 text-xs bg-gray-50 dark:bg-gray-800/60 rounded-lg disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors">Prev</button>
               {getPageNumbers().map((p, i) =>
                 typeof p === 'string' ? (
                   <span key={`e${i}`} className="px-1 text-gray-400 text-xs">…</span>
@@ -305,12 +305,12 @@ export default function Requests() {
                     className={`w-8 h-8 text-xs rounded-lg transition-colors ${
                       p === page
                         ? 'bg-primary-500 text-white font-semibold shadow-sm'
-                        : 'bg-white/60 dark:bg-gray-800/60 hover:bg-white/80 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300'
+                        : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300'
                     }`}>{p}</button>
                 )
               )}
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="px-2.5 py-1.5 text-xs bg-white/60 dark:bg-gray-800/60 rounded-lg disabled:opacity-40 hover:bg-white/80 dark:hover:bg-gray-700/80 transition-colors">Next</button>
+                className="px-2.5 py-1.5 text-xs bg-gray-50 dark:bg-gray-800/60 rounded-lg disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors">Next</button>
             </div>
           </div>
         )}
@@ -322,40 +322,40 @@ export default function Requests() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
-              <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required />
+              <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Requester Name *</label>
-              <input type="text" value={form.requester_name} onChange={(e) => setForm({ ...form, requester_name: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required />
+              <input type="text" value={form.requester_name} onChange={(e) => setForm({ ...form, requester_name: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Requester Email</label>
-              <input type="email" value={form.requester_email} onChange={(e) => setForm({ ...form, requester_email: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
+              <input type="email" value={form.requester_email} onChange={(e) => setForm({ ...form, requester_email: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
-              <input type="text" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
+              <input type="text" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-              <input type="text" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
+              <input type="text" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Urgency</label>
-              <select value={form.urgency} onChange={(e) => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+              <select value={form.urgency} onChange={(e) => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
                 {URGENCIES.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
                 {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             {isAdmin && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned To</label>
-                <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
                   <option value="">Unassigned</option>
                   {staffList.map((u: any) => <option key={u.id} value={u.id}>{u.name} ({u.department})</option>)}
                 </select>
@@ -363,16 +363,16 @@ export default function Requests() {
             )}
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" />
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" />
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</label>
-              <textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} rows={2} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" />
+              <textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} rows={2} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button>
-            <button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-700 text-white text-sm rounded-xl font-medium hover:shadow-lg transition-all">
+            <button type="submit" className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-xl font-medium transition-colors">
               {editingReq ? 'Update Request' : 'Create Request'}
             </button>
           </div>

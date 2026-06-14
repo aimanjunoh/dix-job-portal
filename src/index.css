@@ -10,95 +10,121 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #4338ca 0%, #6366f1 40%, #7c3aed 100%);
+  background: #f8f9fb;
+  color: #1a1a2e;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .dark body {
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%);
+  background: #0f0f17;
+  color: #e4e4ec;
 }
 
 #root {
   min-height: 100vh;
 }
 
+/* ─── Light mode: clean white surfaces ─── */
+
 .glass {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: #ffffff;
+  border: 1px solid #e8e8ef;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .dark .glass {
-  background: rgba(30, 27, 75, 0.80);
-  border: 1px solid rgba(99, 102, 241, 0.15);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background: rgba(22, 22, 38, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
 .glass-dark {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: #ffffff;
+  border: 1px solid #e8e8ef;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .dark .glass-dark {
-  background: rgba(30, 27, 75, 0.90);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  background: rgba(18, 18, 32, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: #ffffff;
+  border: 1px solid #e8e8ef;
   border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .dark .glass-card {
-  background: rgba(30, 27, 75, 0.65);
-  border: 1px solid rgba(99, 102, 241, 0.12);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  background: rgba(22, 22, 38, 0.7);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
 }
 
 .glass-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+  transform: translateY(-1px);
 }
 
 .dark .glass-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
-.status-new { background: #fee2e2; color: #dc2626; }
-.status-in-progress { background: #e0e7ff; color: #4f46e5; }
-.status-pending-info { background: #fef3c7; color: #d97706; }
-.status-completed { background: #d1fae5; color: #059669; }
-.status-unassigned { background: #ffedd5; color: #ea580c; }
+/* ─── Status badges (Apple/Linear-inspired soft palette) ─── */
 
-.dark .status-new { background: #450a0a; color: #fca5a5; }
-.dark .status-in-progress { background: #312e81; color: #a5b4fc; }
-.dark .status-pending-info { background: #451a03; color: #fcd34d; }
-.dark .status-completed { background: #052e16; color: #6ee7b7; }
-.dark .status-unassigned { background: #431407; color: #fdba74; }
+.status-new { background: #f0f0f5; color: #6366f1; }
+.status-in-progress { background: #e8edff; color: #4338ca; }
+.status-pending-info { background: #fef6e7; color: #b45309; }
+.status-completed { background: #e8f8ef; color: #059669; }
+.status-unassigned { background: #fff1e6; color: #c2410c; }
+.status-escalated { background: #fee2e2; color: #dc2626; }
+.status-overdue { background: #fee2e2; color: #dc2626; }
+.status-assigned { background: #e8edff; color: #4338ca; }
+.status-active { background: #e8edff; color: #4338ca; }
+.status-planning { background: #f0f0f5; color: #6b7280; }
+.status-on-track { background: #e8f8ef; color: #059669; }
+.status-delayed { background: #fee2e2; color: #dc2626; }
+.status-on-hold { background: #fef6e7; color: #b45309; }
+.status-cancelled { background: #f3f4f6; color: #9ca3af; }
+.status-default { background: #f3f4f6; color: #6b7280; }
 
-.urgency-normal { background: #e0e7ff; color: #4338ca; }
-.urgency-urgent { background: #fef3c7; color: #b45309; }
+.dark .status-new { background: rgba(99, 102, 241, 0.12); color: #a5b4fc; }
+.dark .status-in-progress { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; }
+.dark .status-pending-info { background: rgba(245, 158, 11, 0.12); color: #fcd34d; }
+.dark .status-completed { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; }
+.dark .status-unassigned { background: rgba(234, 88, 12, 0.12); color: #fdba74; }
+.dark .status-escalated { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
+.dark .status-overdue { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
+.dark .status-assigned { background: rgba(99, 102, 241, 0.12); color: #a5b4fc; }
+.dark .status-active { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; }
+.dark .status-planning { background: rgba(107, 114, 128, 0.12); color: #9ca3af; }
+.dark .status-on-track { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; }
+.dark .status-delayed { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
+.dark .status-on-hold { background: rgba(245, 158, 11, 0.12); color: #fcd34d; }
+.dark .status-cancelled { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+.dark .status-default { background: rgba(107, 114, 128, 0.1); color: #9ca3af; }
+
+/* ─── Urgency badges ─── */
+
+.urgency-normal { background: #eef2ff; color: #4338ca; }
+.urgency-urgent { background: #fef6e7; color: #b45309; }
 .urgency-critical { background: #fee2e2; color: #dc2626; }
 
-.dark .urgency-normal { background: #312e81; color: #a5b4fc; }
-.dark .urgency-urgent { background: #451a03; color: #fcd34d; }
-.dark .urgency-critical { background: #450a0a; color: #fca5a5; }
+.dark .urgency-normal { background: rgba(99, 102, 241, 0.12); color: #a5b4fc; }
+.dark .urgency-urgent { background: rgba(245, 158, 11, 0.12); color: #fcd34d; }
+.dark .urgency-critical { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
 
 input, select, textarea {
   font-size: 16px;

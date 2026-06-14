@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/shared/StatusBadge';
 import { ArrowLeft, Clock, User, Mail, Tag, AlertTriangle, MessageSquare, Edit2, Link, Unlink, Search } from 'lucide-react';
+import { formatRelativeTime } from '../utils/timeFormat';
 import toast from 'react-hot-toast';
 
 const STATUSES = ['New', 'In Progress', 'Pending Info', 'Completed'];
@@ -127,12 +128,12 @@ export default function RequestDetail() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/requests')} className="p-2 glass-card hover:bg-white/90">
+        <button onClick={() => navigate('/requests')} className="p-2 glass-card hover:bg-gray-100 dark:hover:bg-white/10 transition-colors rounded-xl">
           <ArrowLeft size={18} className="text-gray-600 dark:text-gray-400" />
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-xl lg:text-2xl font-bold text-white">{request.request_id}</h1>
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">{request.request_id}</h1>
             <StatusBadge status={request.status} />
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               request.urgency === 'Critical' ? 'urgency-critical' : request.urgency === 'Urgent' ? 'urgency-urgent' : 'urgency-normal'
@@ -147,23 +148,23 @@ export default function RequestDetail() {
               </span>
             )}
           </div>
-          <p className="text-white/70 text-sm mt-1">{request.title}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{request.title}</p>
         </div>
         {!isGuest && isAdmin && (
           <div className="relative">
             {request.related_request_id ? (
-              <button onClick={handleUnlinkRequest} className="flex items-center gap-2 px-3 py-2 bg-white/90 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-medium hover:shadow-lg transition-all" title="Unlink request">
+              <button onClick={handleUnlinkRequest} className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Unlink request">
                 <Unlink size={14} /> Unlink
               </button>
             ) : (
-              <button onClick={() => setLinking(!linking)} className="flex items-center gap-2 px-3 py-2 bg-white/90 text-primary-600 rounded-xl text-sm font-medium hover:shadow-lg transition-all">
+              <button onClick={() => setLinking(!linking)} className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-primary-600 dark:text-primary-400 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                 <Link size={14} /> Link
               </button>
             )}
           </div>
         )}
         {!isGuest && (
-          <button onClick={() => setEditing(!editing)} className="flex items-center gap-2 px-4 py-2 bg-white text-primary-600 rounded-xl text-sm font-medium hover:shadow-lg transition-all">
+          <button onClick={() => setEditing(!editing)} className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-medium transition-colors">
             <Edit2 size={14} /> {editing ? 'Cancel' : 'Edit'}
           </button>
         )}
@@ -182,7 +183,7 @@ export default function RequestDetail() {
             placeholder="Search by REQ-ID or title..."
             value={linkSearch}
             onChange={(e) => handleSearchForLinking(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm mb-3"
+            className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm mb-3"
             autoFocus
           />
           {linkResults.length > 0 && (
@@ -245,14 +246,14 @@ export default function RequestDetail() {
           {request.description && (
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Description</p>
-              <p className="text-sm text-gray-700 dark:text-gray-300 bg-white/40 rounded-xl p-3">{request.description}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-white/[0.03] rounded-xl p-3">{request.description}</p>
             </div>
           )}
 
           {request.remarks && !editing && (
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Remarks</p>
-              <p className="text-sm text-gray-700 dark:text-gray-300 bg-white/40 rounded-xl p-3">{request.remarks}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-white/[0.03] rounded-xl p-3">{request.remarks}</p>
             </div>
           )}
 
@@ -262,20 +263,20 @@ export default function RequestDetail() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
                     {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Urgency</label>
-                  <select value={form.urgency} onChange={(e) => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                  <select value={form.urgency} onChange={(e) => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
                     {URGENCIES.map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
                 </div>
                 {isAdmin && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned To</label>
-                    <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                    <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
                       <option value="">Unassigned</option>
                       {staffList.map((u: any) => <option key={u.id} value={u.id}>{u.name} ({u.department})</option>)}
                     </select>
@@ -283,18 +284,18 @@ export default function RequestDetail() {
                 )}
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</label>
-                  <textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} rows={3} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" />
+                  <textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} rows={3} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" />
                 </div>
               </div>
               <div className="flex justify-end">
-                <button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-700 text-white text-sm rounded-xl font-medium hover:shadow-lg transition-all">Save Changes</button>
+                <button type="submit" className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-xl font-medium transition-colors">Save Changes</button>
               </div>
             </form>
           )}
 
           <div className="text-xs text-gray-400 dark:text-gray-500 flex gap-4">
-            <span>Created: {new Date(request.created_at).toLocaleString()}</span>
-            <span>Updated: {new Date(request.updated_at).toLocaleString()}</span>
+            <span>Created: {formatRelativeTime(request.created_at)}</span>
+            <span>Updated: {formatRelativeTime(request.updated_at)}</span>
           </div>
         </div>
 
@@ -313,7 +314,7 @@ export default function RequestDetail() {
                   <div>
                     <p className="text-sm text-gray-800 dark:text-gray-200 font-medium">{act.action}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{act.details}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{act.performed_by} · {new Date(act.timestamp).toLocaleString()}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{act.performed_by} · {formatRelativeTime(act.timestamp)}</p>
                   </div>
                 </div>
               ))

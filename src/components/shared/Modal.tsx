@@ -50,7 +50,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`relative glass-dark w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto p-6`}
+        className={`relative w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto p-6 bg-white dark:bg-[#16162a] border border-gray-100 dark:border-gray-800/60 rounded-2xl shadow-xl`}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 id={titleId} className="text-xl font-bold text-gray-800 dark:text-gray-100">{title}</h2>

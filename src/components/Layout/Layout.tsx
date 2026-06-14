@@ -21,11 +21,11 @@ export default function Layout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <div className="lg:hidden glass-dark sticky top-0 z-30 px-4 py-3 flex items-center gap-3 m-2 mb-0">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-white/50 rounded-lg">
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        <div className="lg:hidden sticky top-0 z-30 px-4 py-3 flex items-center gap-3 m-2 mb-0 bg-white dark:bg-[#13131f] border border-gray-100 dark:border-gray-800/60 rounded-2xl shadow-sm">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">
+            {sidebarOpen ? <X size={20} className="text-gray-600 dark:text-gray-400" /> : <Menu size={20} className="text-gray-600 dark:text-gray-400" />}
           </button>
-          <img src="/dix-logo.png" alt="DIX" className="h-6 object-contain" />
+          <img src="/dix-logo.svg" alt="DIX" className="h-7 object-contain" />
         </div>
 
         {/* Page content */}

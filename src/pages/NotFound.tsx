@@ -21,7 +21,7 @@ export default function NotFound() {
         </p>
         <button
           onClick={() => navigate('/')}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-700 text-white rounded-xl font-medium hover:shadow-lg transition-all text-sm"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors text-sm"
         >
           <Home size={16} />
           Back to Dashboard

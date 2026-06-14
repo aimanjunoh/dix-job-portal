@@ -125,28 +125,28 @@ export default function Insights() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1 flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center">
-              <BarChart3 size={20} />
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-primary-50 dark:bg-primary-500/15 rounded-xl flex items-center justify-center">
+              <BarChart3 size={20} className="text-primary-600 dark:text-primary-400" />
             </div>
             Insights
           </h1>
-          <p className="text-white/60 text-sm ml-[46px]">Analytics, trends and management reporting</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm ml-[46px]">Analytics, trends and management reporting</p>
         </div>
 
         {/* Export buttons (hidden for guests) */}
         {!isGuest && (
           <div className="flex gap-2 print:hidden">
             <button onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-sm font-medium text-white/90 transition-all border border-white/10">
+              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors">
               <Download size={14} /> CSV
             </button>
             <button onClick={handleExportExcel}
-              className="flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-sm font-medium text-white/90 transition-all border border-white/10">
+              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors">
               <FileSpreadsheet size={14} /> Excel
             </button>
             <button onClick={handleExportPDF}
-              className="flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-sm font-medium text-white/90 transition-all border border-white/10">
+              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors">
               <FileText size={14} /> PDF
             </button>
           </div>
@@ -154,15 +154,15 @@ export default function Insights() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="glass-dark p-1.5 flex gap-1 overflow-x-auto print:hidden">
+      <div className="bg-gray-100 dark:bg-gray-800/50 p-1.5 flex gap-1 overflow-x-auto rounded-xl print:hidden">
         {TABS.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === tab.key
-                ? 'bg-white/90 text-gray-800 shadow-lg shadow-black/5'
-                : 'text-gray-500 hover:bg-white/30 hover:text-gray-700'
+                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
             {tab.label}

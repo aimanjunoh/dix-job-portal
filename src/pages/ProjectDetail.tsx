@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/shared/Modal';
 import { ArrowLeft, Plus, Trash2, Check, Edit2, Send } from 'lucide-react';
+import { formatRelativeTime } from '../utils/timeFormat';
 import toast from 'react-hot-toast';
 
 const PROJECT_STATUSES = ['Planning', 'Active', 'On Hold', 'Completed', 'Cancelled'];
@@ -197,7 +198,7 @@ export default function ProjectDetail() {
   };
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full"></div></div>;
-  if (!project) return <div className="text-center py-20 text-white/60">Project not found</div>;
+  if (!project) return <div className="text-center py-20 text-gray-400 dark:text-gray-500">Project not found</div>;
 
   const doneTasks = tasks.filter(t => t.status === 'Done').length;
   const totalTasks = tasks.length;
@@ -207,12 +208,12 @@ export default function ProjectDetail() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <button onClick={() => navigate('/projects')} className="flex items-center gap-1 text-white/60 hover:text-white text-sm mb-2"><ArrowLeft size={14} /> Back to Projects</button>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">{project.title}</h1>
-          <p className="text-white/70 mt-1">{project.project_id} &middot; Owner: {project.owner_name || 'Unassigned'}</p>
+          <button onClick={() => navigate('/projects')} className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-sm mb-2"><ArrowLeft size={14} /> Back to Projects</button>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{project.title}</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">{project.project_id} &middot; Owner: {project.owner_name || 'Unassigned'}</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={openEdit} className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm"><Edit2 size={14} /> Edit</button>
+          <button onClick={openEdit} className="flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm transition-colors"><Edit2 size={14} /> Edit</button>
         </div>
       </div>
 
@@ -246,7 +247,7 @@ export default function ProjectDetail() {
       {/* Tabs */}
       <div className="flex gap-1 glass p-1 rounded-xl overflow-x-auto">
         {TABS.map(t => (
-          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${tab === t ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'}`}>{t}</button>
+          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${tab === t ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>{t}</button>
         ))}
       </div>
 
@@ -309,7 +310,7 @@ export default function ProjectDetail() {
             </div>
           )}
           <div className="flex justify-end">
-            <button onClick={() => setMilestoneOpen(true)} className="flex items-center gap-1.5 px-3 py-2 bg-white text-primary-600 rounded-xl text-sm font-medium hover:shadow-lg"><Plus size={14} /> Add Milestone</button>
+            <button onClick={() => setMilestoneOpen(true)} className="flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-medium transition-colors"><Plus size={14} /> Add Milestone</button>
           </div>
           {milestones.length === 0 ? (
             <div className="glass p-8 text-center text-gray-500 dark:text-gray-400">No milestones yet</div>
@@ -361,7 +362,7 @@ export default function ProjectDetail() {
       {tab === 'Tasks' && (
         <div className="space-y-4">
           <div className="flex justify-end">
-            <button onClick={() => setTaskOpen(true)} className="flex items-center gap-1.5 px-3 py-2 bg-white text-primary-600 rounded-xl text-sm font-medium hover:shadow-lg"><Plus size={14} /> Add Task</button>
+            <button onClick={() => setTaskOpen(true)} className="flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-medium transition-colors"><Plus size={14} /> Add Task</button>
           </div>
           {tasks.length === 0 ? (
             <div className="glass p-8 text-center text-gray-500 dark:text-gray-400">No tasks yet</div>
@@ -400,19 +401,19 @@ export default function ProjectDetail() {
         <div className="space-y-4">
           <div className="glass p-4">
             <div className="flex gap-2">
-              <select value={noteCategory} onChange={(e) => setNoteCategory(e.target.value)} className="px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-w-[140px]">
+              <select value={noteCategory} onChange={(e) => setNoteCategory(e.target.value)} className="px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-w-[140px]">
                 {NOTE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
               <input type="text" value={noteText} onChange={(e) => setNoteText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
-                placeholder="Add a note or update..." className="flex-1 px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
+                placeholder="Add a note or update..." className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
               <button onClick={handleAddNote} className="p-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600"><Send size={16} /></button>
             </div>
           </div>
           {/* Category filter */}
           <div className="flex gap-1.5 flex-wrap">
-            <button onClick={() => setNoteFilter('')} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${noteFilter === '' ? 'bg-primary-500 text-white' : 'bg-white/60 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 hover:bg-white'}`}>All</button>
+            <button onClick={() => setNoteFilter('')} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${noteFilter === '' ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}>All</button>
             {NOTE_CATEGORIES.map(c => (
-              <button key={c} onClick={() => setNoteFilter(c)} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${noteFilter === c ? 'bg-primary-500 text-white' : 'bg-white/60 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 hover:bg-white'}`}>{c}</button>
+              <button key={c} onClick={() => setNoteFilter(c)} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${noteFilter === c ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}>{c}</button>
             ))}
           </div>
           {(noteFilter ? notes.filter(n => n.category === noteFilter) : notes).length === 0 ? (
@@ -426,7 +427,7 @@ export default function ProjectDetail() {
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${NOTE_CATEGORY_COLORS[note.category] || NOTE_CATEGORY_COLORS['General']}`}>{note.category || 'General'}</span>
                     </div>
                     <p className="text-sm text-gray-700 dark:text-gray-300">{note.note}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{note.user_name} &middot; {new Date(note.created_at).toLocaleString()}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{note.user_name} &middot; {formatRelativeTime(note.created_at)}</p>
                   </div>
                   <button onClick={() => deleteNote(note.id)} className="p-1 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><Trash2 size={12} /></button>
                 </div>
@@ -439,28 +440,28 @@ export default function ProjectDetail() {
       {/* Edit Project Modal */}
       <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit Project" size="lg">
         <form onSubmit={handleEditSubmit} className="space-y-4">
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label><input type="text" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={3} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label><input type="text" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={3} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" /></div>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label><select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">{PROJECT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label><select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">{PROJECT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Progress ({editForm.progress}%)</label><input type="range" min="0" max="100" value={editForm.progress} onChange={(e) => setEditForm({ ...editForm, progress: Number(e.target.value) })} className="w-full" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label><input type="date" value={editForm.start_date} onChange={(e) => setEditForm({ ...editForm, start_date: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label><input type="date" value={editForm.due_date} onChange={(e) => setEditForm({ ...editForm, due_date: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label><input type="date" value={editForm.start_date} onChange={(e) => setEditForm({ ...editForm, start_date: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label><input type="date" value={editForm.due_date} onChange={(e) => setEditForm({ ...editForm, due_date: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
           </div>
-          <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditOpen(false)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-700 text-white text-sm rounded-xl font-medium">Save</button></div>
+          <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditOpen(false)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-xl font-medium transition-colors">Save</button></div>
         </form>
       </Modal>
 
       {/* Add Milestone Modal */}
       <Modal isOpen={milestoneOpen} onClose={() => setMilestoneOpen(false)} title="Add Milestone" size="sm">
         <form onSubmit={handleAddMilestone} className="space-y-4">
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label><input type="text" value={milestoneForm.title} onChange={(e) => setMilestoneForm({ ...milestoneForm, title: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><input type="text" value={milestoneForm.description} onChange={(e) => setMilestoneForm({ ...milestoneForm, description: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label><input type="text" value={milestoneForm.title} onChange={(e) => setMilestoneForm({ ...milestoneForm, title: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><input type="text" value={milestoneForm.description} onChange={(e) => setMilestoneForm({ ...milestoneForm, description: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label><input type="date" value={milestoneForm.due_date} onChange={(e) => setMilestoneForm({ ...milestoneForm, due_date: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weight (%)</label><input type="number" min="0" max="100" value={milestoneForm.weight} onChange={(e) => setMilestoneForm({ ...milestoneForm, weight: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" placeholder="0" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label><input type="date" value={milestoneForm.due_date} onChange={(e) => setMilestoneForm({ ...milestoneForm, due_date: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weight (%)</label><input type="number" min="0" max="100" value={milestoneForm.weight} onChange={(e) => setMilestoneForm({ ...milestoneForm, weight: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" placeholder="0" /></div>
           </div>
-          <div className="flex justify-end gap-3"><button type="button" onClick={() => setMilestoneOpen(false)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-700 text-white text-sm rounded-xl font-medium">Add</button></div>
+          <div className="flex justify-end gap-3"><button type="button" onClick={() => setMilestoneOpen(false)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-xl font-medium transition-colors">Add</button></div>
         </form>
       </Modal>
 
@@ -468,10 +469,10 @@ export default function ProjectDetail() {
       <Modal isOpen={editingMilestone !== null} onClose={() => setEditingMilestone(null)} title="Edit Milestone" size="sm">
         {editingMilestone && (
           <form onSubmit={handleEditMilestone} className="space-y-4">
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phase Name</label><input type="text" value={editingMilestone.title} onChange={(e) => setEditingMilestone({ ...editingMilestone, title: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><textarea value={editingMilestone.description || ''} onChange={(e) => setEditingMilestone({ ...editingMilestone, description: e.target.value })} rows={2} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weight (%)</label><input type="number" min="0" max="100" value={editingMilestone.weight} onChange={(e) => setEditingMilestone({ ...editingMilestone, weight: Number(e.target.value) || 0 })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
-            <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditingMilestone(null)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-700 text-white text-sm rounded-xl font-medium">Save</button></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phase Name</label><input type="text" value={editingMilestone.title} onChange={(e) => setEditingMilestone({ ...editingMilestone, title: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><textarea value={editingMilestone.description || ''} onChange={(e) => setEditingMilestone({ ...editingMilestone, description: e.target.value })} rows={2} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weight (%)</label><input type="number" min="0" max="100" value={editingMilestone.weight} onChange={(e) => setEditingMilestone({ ...editingMilestone, weight: Number(e.target.value) || 0 })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
+            <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditingMilestone(null)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-xl font-medium transition-colors">Save</button></div>
           </form>
         )}
       </Modal>
@@ -479,26 +480,26 @@ export default function ProjectDetail() {
       {/* Add Task Modal */}
       <Modal isOpen={taskOpen} onClose={() => setTaskOpen(false)} title="Add Task" size="sm">
         <form onSubmit={handleAddTask} className="space-y-4">
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label><input type="text" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><textarea value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} rows={2} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" placeholder="Details about this task..." /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label><input type="text" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" required /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><textarea value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} rows={2} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none" placeholder="Details about this task..." /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Milestone</label><select value={taskForm.milestone_id} onChange={(e) => setTaskForm({ ...taskForm, milestone_id: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"><option value="">None</option>{milestones.map(ms => <option key={ms.id} value={ms.id}>{ms.title}</option>)}</select></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assign To</label><select value={taskForm.assigned_to} onChange={(e) => setTaskForm({ ...taskForm, assigned_to: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"><option value="">Unassigned</option>{staffList.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label><select value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">{TASK_PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label><input type="date" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Milestone</label><select value={taskForm.milestone_id} onChange={(e) => setTaskForm({ ...taskForm, milestone_id: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"><option value="">None</option>{milestones.map(ms => <option key={ms.id} value={ms.id}>{ms.title}</option>)}</select></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assign To</label><select value={taskForm.assigned_to} onChange={(e) => setTaskForm({ ...taskForm, assigned_to: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"><option value="">Unassigned</option>{staffList.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label><select value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">{TASK_PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label><input type="date" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" /></div>
           </div>
-          <div className="flex justify-end gap-3"><button type="button" onClick={() => setTaskOpen(false)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-700 text-white text-sm rounded-xl font-medium">Add</button></div>
+          <div className="flex justify-end gap-3"><button type="button" onClick={() => setTaskOpen(false)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button><button type="submit" className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-xl font-medium transition-colors">Add</button></div>
         </form>
       </Modal>
 
       {/* Add Member Modal */}
       <Modal isOpen={addMemberOpen} onClose={() => setAddMemberOpen(false)} title="Add Member" size="sm">
         <div className="space-y-4">
-          <select value={newMemberId} onChange={(e) => setNewMemberId(e.target.value)} className="w-full px-3 py-2.5 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+          <select value={newMemberId} onChange={(e) => setNewMemberId(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
             <option value="">Select a user</option>
             {staffList.filter((u: any) => !members.some(m => m.user_id === u.id)).map((u: any) => <option key={u.id} value={u.id}>{u.name} ({u.department})</option>)}
           </select>
-          <div className="flex justify-end gap-3"><button onClick={() => setAddMemberOpen(false)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button><button onClick={handleAddMember} className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-700 text-white text-sm rounded-xl font-medium">Add</button></div>
+          <div className="flex justify-end gap-3"><button onClick={() => setAddMemberOpen(false)} className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancel</button><button onClick={handleAddMember} className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-xl font-medium transition-colors">Add</button></div>
         </div>
       </Modal>
     </div>
