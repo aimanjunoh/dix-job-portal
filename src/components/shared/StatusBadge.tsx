@@ -23,7 +23,7 @@ const statusClasses: Record<string, string> = {
 export default function StatusBadge({ status, className = '' }: StatusBadgeProps) {
   const classes = statusClasses[status] || 'status-default';
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-semibold tracking-wide ${classes} ${className}`}>
+    <span className={`inline-flex items-center justify-center h-[24px] px-2.5 rounded-full text-[11px] font-semibold whitespace-nowrap leading-none ${classes} ${className}`}>
       {status}
     </span>
   );

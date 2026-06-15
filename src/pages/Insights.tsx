@@ -125,7 +125,7 @@ export default function Insights() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2.5">
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2.5">
             <div className="w-9 h-9 bg-primary-50 dark:bg-primary-500/15 rounded-xl flex items-center justify-center">
               <BarChart3 size={20} className="text-primary-600 dark:text-primary-400" />
             </div>
@@ -136,17 +136,17 @@ export default function Insights() {
 
         {/* Export buttons (hidden for guests) */}
         {!isGuest && (
-          <div className="flex gap-2 print:hidden">
+          <div className="flex gap-2 print:hidden overflow-x-auto">
             <button onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors">
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors whitespace-nowrap min-h-[40px]">
               <Download size={14} /> CSV
             </button>
             <button onClick={handleExportExcel}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors">
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors whitespace-nowrap min-h-[40px]">
               <FileSpreadsheet size={14} /> Excel
             </button>
             <button onClick={handleExportPDF}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors">
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors whitespace-nowrap min-h-[40px]">
               <FileText size={14} /> PDF
             </button>
           </div>

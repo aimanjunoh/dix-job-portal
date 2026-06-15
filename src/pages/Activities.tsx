@@ -40,8 +40,8 @@ export default function Activities() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Activity Logs</h1>
-        <p className="text-gray-500 dark:text-gray-400">{total} total activities</p>
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">Activity Logs</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{total} total activities</p>
       </div>
 
       <div className="glass p-5">

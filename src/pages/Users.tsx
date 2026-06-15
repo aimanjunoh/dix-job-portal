@@ -124,20 +124,20 @@ export default function Users() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
-          <p className="text-gray-500 dark:text-gray-400">{total} total users</p>
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{total} total users</p>
         </div>
         {isAdmin && (
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors text-sm">
+          <button onClick={openCreate} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors text-sm w-full sm:w-auto">
             <Plus size={16} /> Add User
           </button>
         )}
       </div>
 
       {/* Search and Filter */}
-      <div className="glass p-4 flex flex-col sm:flex-row gap-3">
+      <div className="glass p-3 sm:p-4 flex flex-col sm:flex-row gap-2.5">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -145,13 +145,13 @@ export default function Users() {
             placeholder="Search users..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+          className="w-full sm:w-auto px-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
         >
           <option value="">All Status</option>
           <option value="active">Active</option>
@@ -159,18 +159,18 @@ export default function Users() {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="glass overflow-hidden">
+      {/* Desktop Table (md+) */}
+      <div className="glass overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-800/50">
-                <th onClick={() => handleSort('name')} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200">Name<SortIcon col="name" /></th>
-                <th onClick={() => handleSort('email')} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 hidden sm:table-cell">Email<SortIcon col="email" /></th>
-                <th onClick={() => handleSort('department')} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 hidden md:table-cell">Position<SortIcon col="department" /></th>
-                <th onClick={() => handleSort('role')} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200">Role<SortIcon col="role" /></th>
-                <th onClick={() => handleSort('status')} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200">Status<SortIcon col="status" /></th>
-                {isAdmin && <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Actions</th>}
+                <th onClick={() => handleSort('name')} className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200">Name<SortIcon col="name" /></th>
+                <th onClick={() => handleSort('email')} className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200">Email<SortIcon col="email" /></th>
+                <th onClick={() => handleSort('department')} className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 hidden lg:table-cell">Position<SortIcon col="department" /></th>
+                <th onClick={() => handleSort('role')} className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200">Role<SortIcon col="role" /></th>
+                <th onClick={() => handleSort('status')} className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200">Status<SortIcon col="status" /></th>
+                {isAdmin && <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -186,21 +186,18 @@ export default function Users() {
                         <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
                           <span className="text-white text-xs font-bold">{user.name.charAt(0).toUpperCase()}</span>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{user.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">{user.email}</p>
-                        </div>
+                        <p className="text-[14px] font-semibold text-gray-800 dark:text-gray-200">{user.name}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 hidden sm:table-cell">{user.email}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 hidden md:table-cell">{user.department}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">{user.department}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
+                      <span className={`inline-flex items-center justify-center h-[24px] px-2.5 rounded-full text-[11px] font-semibold ${user.role === 'admin' ? 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
                         {user.role}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      <span className={`inline-flex items-center gap-1 h-[24px] px-2.5 rounded-full text-[11px] font-semibold ${user.status === 'active' ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400'}`}>
                         {user.status === 'active' ? <UserCheck size={12} /> : <UserX size={12} />}
                         {user.status}
                       </span>
@@ -219,34 +216,76 @@ export default function Users() {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200/50 dark:border-gray-700/50">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}
-            </p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-2.5 py-1.5 text-xs bg-gray-100 dark:bg-gray-800/60 rounded-lg disabled:opacity-40 hover:bg-gray-200 dark:hover:bg-gray-700/80 transition-colors">Prev</button>
-              {getPageNumbers().map((p, i) =>
-                typeof p === 'string' ? (
-                  <span key={`e${i}`} className="px-1 text-gray-400 text-xs">…</span>
-                ) : (
-                  <button key={p} onClick={() => setPage(p as number)}
-                    className={`w-8 h-8 text-xs rounded-lg transition-colors ${
-                      p === page
-                        ? 'bg-primary-500 text-white font-semibold shadow-sm'
-                        : 'bg-gray-100 dark:bg-gray-800/60 hover:bg-gray-200 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300'
-                    }`}>{p}</button>
-                )
-              )}
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="px-2.5 py-1.5 text-xs bg-gray-100 dark:bg-gray-800/60 rounded-lg disabled:opacity-40 hover:bg-gray-200 dark:hover:bg-gray-700/80 transition-colors">Next</button>
+      {/* Mobile Card List (below md) */}
+      <div className="md:hidden space-y-2.5">
+        {loading ? (
+          <div className="glass p-8 text-center text-gray-500">Loading...</div>
+        ) : users.length === 0 ? (
+          <div className="glass p-8 text-center text-gray-500">No users found</div>
+        ) : (
+          sortedUsers.map((user: any) => (
+            <div key={user.id} className="glass-card p-3.5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-sm font-bold">{user.name.charAt(0).toUpperCase()}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-0.5">
+                    <p className="text-[15px] font-semibold text-gray-800 dark:text-gray-200 truncate">{user.name}</p>
+                    <span className={`inline-flex items-center gap-1 h-[22px] px-2 rounded-full text-[10px] font-semibold flex-shrink-0 ${user.status === 'active' ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400'}`}>
+                      {user.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className={`inline-flex items-center justify-center h-[22px] px-2 rounded-full text-[10px] font-semibold ${user.role === 'admin' ? 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
+                      {user.role}
+                    </span>
+                    {user.department && (
+                      <span className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{user.department}</span>
+                    )}
+                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-1 mt-2.5 pt-2.5 border-t border-gray-100 dark:border-gray-800/30">
+                      <button onClick={() => openEdit(user)} className="flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"><Edit2 size={13} /> Edit</button>
+                      <button onClick={() => setDeleteConfirm(user.id)} className="flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 size={13} /> Delete</button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          ))
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 sm:px-0">
+          <p className="text-xs text-gray-500 dark:text-gray-400 order-2 sm:order-1">
+            Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}
+          </p>
+          <div className="flex items-center gap-1 order-1 sm:order-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-800/60 rounded-lg disabled:opacity-40 hover:bg-gray-200 dark:hover:bg-gray-700/80 transition-colors min-h-[36px]">Prev</button>
+            {getPageNumbers().map((p, i) =>
+              typeof p === 'string' ? (
+                <span key={`e${i}`} className="px-1 text-gray-400 text-xs hidden sm:inline">…</span>
+              ) : (
+                <button key={p} onClick={() => setPage(p as number)}
+                  className={`w-9 h-9 text-xs rounded-lg transition-colors ${
+                    p === page
+                      ? 'bg-primary-500 text-white font-semibold shadow-sm'
+                      : 'bg-gray-100 dark:bg-gray-800/60 hover:bg-gray-200 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300'
+                  }`}>{p}</button>
+                )
+              )}
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+              className="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-800/60 rounded-lg disabled:opacity-40 hover:bg-gray-200 dark:hover:bg-gray-700/80 transition-colors min-h-[36px]">Next</button>
+          </div>
+        </div>
+      )}
 
       {/* Create/Edit Modal */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingUser ? 'Edit User' : 'Create User'}>
