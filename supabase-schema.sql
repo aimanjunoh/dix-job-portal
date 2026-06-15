@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS requests (
   urgency TEXT NOT NULL DEFAULT 'Normal' CHECK (urgency IN ('Normal', 'Urgent', 'Critical')),
   description TEXT DEFAULT '',
   assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
-  status TEXT NOT NULL DEFAULT 'New' CHECK (status IN ('New', 'In Progress', 'Pending Info', 'Completed')),
+  status TEXT NOT NULL DEFAULT 'New' CHECK (status IN ('New', 'In Progress', 'Pending Info', 'Pending Content', 'Pending Approval', 'Pending Vendor', 'Completed')),
   remarks TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()

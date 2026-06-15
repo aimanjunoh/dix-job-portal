@@ -13,6 +13,7 @@ import QuickAction from './pages/QuickAction';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
 import Insights from './pages/Insights';
+import SlaGuide from './pages/SlaGuide';
 import NotFound from './pages/NotFound';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -46,6 +47,7 @@ function AppRoutes() {
         <Route path="projects" element={<Projects />} />
         <Route path="projects/:id" element={<ProjectDetail />} />
         <Route path="insights" element={<Insights />} />
+        <Route path="sla-guide" element={<SlaGuide />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

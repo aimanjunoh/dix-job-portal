@@ -7,7 +7,7 @@ import StatusBadge from '../components/shared/StatusBadge';
 import { formatRelativeTime, formatDashboardDateTime } from '../utils/timeFormat';
 import {
   ClipboardList, UserCheck, Clock, AlertCircle, CheckCircle2, PlusCircle, Users, HandMetal, AlertTriangle, FolderOpen,
-  Briefcase, BarChart3, ArrowRight, ShieldAlert, Timer, XCircle, Copy, Inbox, LucideIcon
+  Briefcase, BarChart3, ArrowRight, ShieldAlert, Timer, XCircle, Copy, Inbox, LucideIcon, Shield
 } from 'lucide-react';
 
 interface Stats {
@@ -68,6 +68,7 @@ export default function Dashboard() {
   const [projectStats, setProjectStats] = useState({ total: 0, active: 0, planning: 0, completed: 0, delayed: 0 });
   const [myRequests, setMyRequests] = useState<any[]>([]);
   const [myStats, setMyStats] = useState({ assigned: 0, active: 0, overdue: 0, completed: 0 });
+  const [slaStats, setSlaStats] = useState({ withinSLA: 0, approachingSLA: 0, overdueSLA: 0, paused: 0, compliance: 100 });
   const [loading, setLoading] = useState(true);
   const [dateTime, setDateTime] = useState(formatDashboardDateTime());
 
@@ -90,6 +91,7 @@ export default function Dashboard() {
       setProjectStats(dashData.projectStats);
       setMyRequests(dashData.myRequests || []);
       setMyStats(dashData.myStats || { assigned: 0, active: 0, overdue: 0, completed: 0 });
+      setSlaStats(dashData.slaStats || { withinSLA: 0, approachingSLA: 0, overdueSLA: 0, paused: 0, compliance: 100 });
       setStaffList(staffData.users);
     } catch (err) {
       console.error(err);
@@ -155,6 +157,13 @@ export default function Dashboard() {
     { label: 'Completed', value: projectStats.completed, icon: CheckCircle2, accent: 'text-green-600 bg-green-50 dark:bg-green-500/15 dark:text-green-400', filter: 'status=Completed' },
   ];
 
+  const slaCards: KpiCard[] = [
+    { label: 'Within SLA', value: slaStats.withinSLA, icon: CheckCircle2, accent: 'text-green-600 bg-green-50 dark:bg-green-500/15 dark:text-green-400', filter: 'slaStatus=Within+SLA' },
+    { label: 'Approaching', value: slaStats.approachingSLA, icon: Clock, accent: 'text-amber-600 bg-amber-50 dark:bg-amber-500/15 dark:text-amber-400', filter: 'slaStatus=Approaching+SLA' },
+    { label: 'Overdue', value: slaStats.overdueSLA, icon: AlertTriangle, accent: 'text-red-600 bg-red-50 dark:bg-red-500/15 dark:text-red-400', filter: 'slaStatus=Overdue', isAction: true, priority: true },
+    { label: 'Paused', value: slaStats.paused, icon: Timer, accent: 'text-gray-500 bg-gray-100 dark:bg-gray-800 dark:text-gray-400', filter: 'slaStatus=Paused' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -189,6 +198,23 @@ export default function Dashboard() {
         {secondaryCards.map((card) => (
           <KpiCardCell key={card.label} card={card} onClick={() => navigate(`/requests?${card.filter}`)} />
         ))}
+      </div>
+
+      {/* SLA Overview */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Shield size={15} className="text-primary-500" /> SLA Overview
+          </h2>
+          <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+            {slaStats.compliance}% compliance
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {slaCards.map((card) => (
+            <KpiCardCell key={card.label} card={card} onClick={() => navigate(`/requests?${card.filter}`)} />
+          ))}
+        </div>
       </div>
 
       {/* Action Required */}

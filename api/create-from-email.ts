@@ -11,6 +11,27 @@ function generateToken(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
+// SLA calculation (mirrors client-side logic)
+const SLA_WORKING_DAYS: Record<string, number> = { Normal: 3, Urgent: 1, Critical: 0 };
+
+function isWeekend(d: Date): boolean {
+  const day = d.getDay();
+  return day === 0 || day === 6;
+}
+
+function calculateSlaDueDate(createdAt: string, urgency: string): string {
+  const slaDays = SLA_WORKING_DAYS[urgency] ?? 3;
+  const start = new Date(createdAt);
+  if (slaDays === 0) return start.toISOString().split('T')[0];
+  const result = new Date(start);
+  let added = 0;
+  while (added < slaDays) {
+    result.setDate(result.getDate() + 1);
+    if (!isWeekend(result)) added++;
+  }
+  return result.toISOString().split('T')[0];
+}
+
 async function generateRequestId(): Promise<string> {
   const { data } = await supabase
     .from('requests')
@@ -69,6 +90,10 @@ export default async function handler(req: any, res: any) {
       status: 'New',
       remarks,
       action_token,
+      sla_due_date: calculateSlaDueDate(new Date().toISOString(), urgency),
+      sla_status: 'Within SLA',
+      sla_paused_days: 0,
+      sla_paused_at: null,
     }).select().single();
 
     if (error) throw error;

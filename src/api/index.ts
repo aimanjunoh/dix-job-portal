@@ -1,17 +1,69 @@
 import { supabase } from '../lib/supabase';
+import { isHoliday } from '../config/public-holidays';
 
 // --- SLA Helpers ---
 const SLA_WORKING_DAYS: Record<string, number> = {
   Normal: 3,
-  Urgent: 2,
+  Urgent: 1,
   Critical: 0, // same working day
 };
 
-const PAUSED_STATUSES = ['Pending Info', 'Pending Content', 'Pending Approval'];
+const PAUSED_STATUSES = ['Pending Info', 'Pending Content', 'Pending Approval', 'Pending Vendor'];
 
 function isWeekend(d: Date): boolean {
   const day = d.getDay();
   return day === 0 || day === 6;
+}
+
+/**
+ * Adjusts a date to the effective working day start based on office hours.
+ * Office hours: Mon–Thu 8:30 AM – 5:00 PM, Fri 8:30 AM – 12:30 PM.
+ * Requests submitted outside office hours are treated as received on the next working day.
+ */
+function getEffectiveStartDate(d: Date): Date {
+  const result = new Date(d);
+  const day = result.getDay();
+  const hour = result.getHours();
+  const minute = result.getMinutes();
+  const timeInMinutes = hour * 60 + minute;
+
+  // Helper: set to 8:30 AM
+  const setToMorning = (date: Date) => {
+    date.setHours(8, 30, 0, 0);
+    return date;
+  };
+
+  // Helper: advance to next day at 8:30 AM, skipping weekends and holidays
+  const advanceToNextWorkingDay = (date: Date) => {
+    date.setDate(date.getDate() + 1);
+    while (isWeekend(date) || isHoliday(date)) {
+      date.setDate(date.getDate() + 1);
+    }
+    return setToMorning(date);
+  };
+
+  // Weekend or holiday → next working day
+  if (isWeekend(result) || isHoliday(result)) {
+    return advanceToNextWorkingDay(result);
+  }
+
+  // Before office hours (before 8:30 AM)
+  if (timeInMinutes < 8 * 60 + 30) {
+    return setToMorning(result);
+  }
+
+  // Friday after 12:30 PM → next Monday (or next working day)
+  if (day === 5 && timeInMinutes >= 12 * 60 + 30) {
+    return advanceToNextWorkingDay(result);
+  }
+
+  // Mon–Thu after 5:00 PM → next working day
+  if (day >= 1 && day <= 4 && timeInMinutes >= 17 * 60) {
+    return advanceToNextWorkingDay(result);
+  }
+
+  // During office hours — return as-is
+  return result;
 }
 
 function addWorkingDays(start: Date, days: number): Date {
@@ -20,17 +72,27 @@ function addWorkingDays(start: Date, days: number): Date {
   let added = 0;
   while (added < days) {
     result.setDate(result.getDate() + 1);
-    if (!isWeekend(result)) added++;
+    if (!isWeekend(result) && !isHoliday(result)) added++;
   }
   return result;
 }
 
+/**
+ * Parse a date string to local midnight, avoiding UTC timezone shift.
+ * "2026-06-16" and ISO timestamps both produce June 16 at local midnight.
+ */
+function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 function workingDaysBetween(start: Date, end: Date): number {
   let count = 0;
-  const current = new Date(start);
-  while (current < end) {
+  const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const target = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  while (current < target) {
     current.setDate(current.getDate() + 1);
-    if (!isWeekend(current)) count++;
+    if (!isWeekend(current) && !isHoliday(current)) count++;
   }
   return count;
 }
@@ -38,8 +100,8 @@ function workingDaysBetween(start: Date, end: Date): number {
 function calculateSlaDueDate(createdAt: string, urgency: string, pausedDays: number = 0): string {
   const created = new Date(createdAt);
   const slaDays = SLA_WORKING_DAYS[urgency] ?? 3;
-  // Start counting from creation date, add paused days offset
-  const effectiveStart = new Date(created);
+  // Adjust for office hours — requests outside office hours start next working day
+  const effectiveStart = getEffectiveStartDate(created);
   // Add back paused days as working days to shift the start forward
   let shiftedStart = effectiveStart;
   if (pausedDays > 0) {
@@ -56,7 +118,7 @@ function calculateSlaStatus(slaDueDate: string | null, status: string, pausedAt:
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const due = new Date(slaDueDate);
+  const due = parseLocalDate(slaDueDate);
   const diffDays = workingDaysBetween(today, due);
   const diffNegative = workingDaysBetween(due, today);
 
@@ -328,18 +390,23 @@ export const api = {
       if (error) throw error;
 
       const requests = (data || []).map((r: any) => {
-        // Recalculate SLA status dynamically for accuracy
-        const slaStatus = r.sla_due_date
-          ? calculateSlaStatus(r.sla_due_date, r.status, r.sla_paused_at || null)
+        // Always dynamically compute sla_due_date from current urgency
+        const effectiveDueDate = r.created_at
+          ? calculateSlaDueDate(r.created_at, r.urgency || 'Normal', r.sla_paused_days || 0)
+          : r.sla_due_date || null;
+
+        // Recalculate SLA status dynamically
+        const slaStatus = effectiveDueDate
+          ? calculateSlaStatus(effectiveDueDate, r.status, r.sla_paused_at || null)
           : r.sla_status || 'Within SLA';
 
         // Calculate days remaining or overdue
         let daysRemaining = null;
         let overdueDays = null;
-        if (r.sla_due_date && r.status !== 'Completed') {
+        if (effectiveDueDate && r.status !== 'Completed') {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          const due = new Date(r.sla_due_date);
+          const due = parseLocalDate(effectiveDueDate);
           if (today <= due) {
             daysRemaining = workingDaysBetween(today, due);
           } else {
@@ -350,6 +417,7 @@ export const api = {
         return {
           ...r,
           assigned_name: r.users?.name || null,
+          sla_due_date: effectiveDueDate,
           sla_status: slaStatus,
           sla_days_remaining: daysRemaining,
           sla_overdue_days: overdueDays,
@@ -373,12 +441,15 @@ export const api = {
         new: requests.filter(r => r.status === 'New').length,
       };
 
-      // SLA stats — compute dynamically
+      // SLA stats — compute dynamically from current urgency
       const activeRequests = requests.filter(r => r.status !== 'Completed');
       const slaCounts = { withinSLA: 0, approachingSLA: 0, overdueSLA: 0, paused: 0 };
       for (const r of activeRequests) {
-        const slaSt = r.sla_due_date
-          ? calculateSlaStatus(r.sla_due_date, r.status, r.sla_paused_at || null)
+        const effectiveDueDate = r.created_at
+          ? calculateSlaDueDate(r.created_at, r.urgency || 'Normal', r.sla_paused_days || 0)
+          : r.sla_due_date || null;
+        const slaSt = effectiveDueDate
+          ? calculateSlaStatus(effectiveDueDate, r.status, r.sla_paused_at || null)
           : 'Within SLA';
         if (slaSt === 'Overdue') slaCounts.overdueSLA++;
         else if (slaSt === 'Approaching SLA') slaCounts.approachingSLA++;
@@ -550,8 +621,57 @@ export const api = {
         .eq('request_id', id)
         .order('timestamp', { ascending: false });
 
+      // Always dynamically compute sla_due_date from current urgency (never trust stale stored values)
+      const effectiveDueDate = request?.created_at
+        ? calculateSlaDueDate(request.created_at, request?.urgency || 'Normal', request?.sla_paused_days || 0)
+        : request?.sla_due_date || null;
+
+      // Enrich with dynamic SLA calculation (mirrors requests.list pattern)
+      const slaStatus = effectiveDueDate
+        ? calculateSlaStatus(effectiveDueDate, request.status, request.sla_paused_at || null)
+        : 'Within SLA';
+
+      let slaDaysRemaining: number | null = null;
+      let slaOverdueDays: number | null = null;
+      let slaTurnaround: 'Met' | 'Missed' | null = null;
+      let slaTurnaroundDays: number | null = null;
+
+      if (effectiveDueDate && request.status !== 'Completed') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = parseLocalDate(effectiveDueDate);
+        if (today <= due) {
+          slaDaysRemaining = workingDaysBetween(today, due);
+        } else {
+          slaOverdueDays = workingDaysBetween(due, today);
+        }
+      }
+
+      // SLA turnaround for completed requests: was it completed before or after due date?
+      if (request?.status === 'Completed' && effectiveDueDate) {
+        const completedAt = parseLocalDate(request.updated_at);
+        const due = parseLocalDate(effectiveDueDate);
+        if (completedAt <= due) {
+          slaTurnaround = 'Met';
+          slaTurnaroundDays = workingDaysBetween(completedAt, due);
+        } else {
+          slaTurnaround = 'Missed';
+          slaTurnaroundDays = workingDaysBetween(due, completedAt);
+        }
+      }
+
       return {
-        request: { ...request, assigned_name: request?.users?.name || null, users: undefined },
+        request: {
+          ...request,
+          assigned_name: request?.users?.name || null,
+          users: undefined,
+          sla_due_date: effectiveDueDate,
+          sla_status: slaStatus,
+          sla_days_remaining: slaDaysRemaining,
+          sla_overdue_days: slaOverdueDays,
+          sla_turnaround: slaTurnaround,
+          sla_turnaround_days: slaTurnaroundDays,
+        },
         activities: activities || [],
       };
     },
@@ -1172,4 +1292,16 @@ export const api = {
       return { requests, projects, users: allUsers || [] };
     },
   },
+};
+
+// Export SLA utilities for use in components (e.g., RequestDetail)
+export const slaUtils = {
+  workingDaysBetween,
+  isWeekend,
+  isHoliday,
+  getEffectiveStartDate,
+  addWorkingDays,
+  calculateSlaDueDate,
+  calculateSlaStatus,
+  PAUSED_STATUSES,
 };

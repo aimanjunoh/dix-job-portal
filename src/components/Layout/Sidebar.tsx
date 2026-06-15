@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, Users, ClipboardList, Activity, LogOut, X, FolderOpen, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardList, Activity, LogOut, X, FolderOpen, BarChart3, BookOpen } from 'lucide-react';
 import ThemeToggle from '../shared/ThemeToggle';
 import { useTheme } from '../shared/ThemeToggle';
 
@@ -13,6 +13,7 @@ const mainNavItems = [
 const analyticsNavItems = [
   { to: '/insights', icon: BarChart3, label: 'Insights' },
   { to: '/activities', icon: Activity, label: 'Activity Logs' },
+  { to: '/sla-guide', icon: BookOpen, label: 'SLA Guide' },
 ];
 
 const adminNavItems = [

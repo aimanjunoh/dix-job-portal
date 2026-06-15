@@ -7,7 +7,7 @@ import StatusBadge from '../components/shared/StatusBadge';
 import { Plus, Search, Edit2, Trash2, Eye, Filter, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const STATUSES = ['New', 'In Progress', 'Pending Info', 'Completed'];
+const STATUSES = ['New', 'In Progress', 'Pending Info', 'Pending Content', 'Pending Approval', 'Pending Vendor', 'Completed'];
 const URGENCIES = ['Normal', 'Urgent', 'Critical'];
 
 export default function Requests() {

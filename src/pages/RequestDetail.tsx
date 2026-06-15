@@ -1,13 +1,13 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../api';
+import { api, slaUtils } from '../api';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/shared/StatusBadge';
-import { ArrowLeft, Clock, User, Mail, Tag, AlertTriangle, MessageSquare, Edit2, Link, Unlink, Search } from 'lucide-react';
+import { ArrowLeft, Clock, User, Mail, Tag, AlertTriangle, MessageSquare, Edit2, Link, Unlink, Search, CheckCircle2, XCircle } from 'lucide-react';
 import { formatRelativeTime } from '../utils/timeFormat';
 import toast from 'react-hot-toast';
 
-const STATUSES = ['New', 'In Progress', 'Pending Info', 'Completed'];
+const STATUSES = ['New', 'In Progress', 'Pending Info', 'Pending Content', 'Pending Approval', 'Pending Vendor', 'Completed'];
 const URGENCIES = ['Normal', 'Urgent', 'Critical'];
 
 export default function RequestDetail() { 
@@ -170,6 +170,48 @@ export default function RequestDetail() {
         )}
       </div>
 
+      {/* SLA Turnaround Alert Banner */}
+      {request.status === 'Completed' && request.sla_turnaround && (
+        <div className={`flex items-center gap-3 p-4 rounded-2xl border ${
+          request.sla_turnaround === 'Met'
+            ? 'bg-green-50 dark:bg-green-500/8 border-green-200 dark:border-green-800/40'
+            : 'bg-red-50 dark:bg-red-500/8 border-red-200 dark:border-red-800/40'
+        }`}>
+          {request.sla_turnaround === 'Met' ? (
+            <div className="w-9 h-9 rounded-full bg-green-100 dark:bg-green-500/15 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" />
+            </div>
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-500/15 flex items-center justify-center flex-shrink-0">
+              <XCircle size={18} className="text-red-600 dark:text-red-400" />
+            </div>
+          )}
+          <div className="flex-1">
+            <p className={`text-sm font-semibold ${
+              request.sla_turnaround === 'Met' ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'
+            }`}>
+              {request.sla_turnaround === 'Met' ? 'SLA Met' : 'SLA Missed'}
+            </p>
+            <p className={`text-xs mt-0.5 ${
+              request.sla_turnaround === 'Met' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+            }`}>
+              {request.sla_turnaround === 'Met'
+                ? (request.sla_turnaround_days === 0
+                  ? 'Completed exactly on the SLA due date'
+                  : `Completed ${request.sla_turnaround_days} working day${request.sla_turnaround_days !== 1 ? 's' : ''} before the SLA deadline`)
+                : `Completed ${request.sla_turnaround_days} working day${request.sla_turnaround_days !== 1 ? 's' : ''} after the SLA deadline`}
+            </p>
+          </div>
+          <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${
+            request.sla_turnaround === 'Met'
+              ? 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400'
+              : 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400'
+          }`}>
+            Due: {request.sla_due_date}
+          </span>
+        </div>
+      )}
+
       {/* Link Request Panel */}
       {linking && (
         <div className="glass p-4">
@@ -256,6 +298,116 @@ export default function RequestDetail() {
               <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-white/[0.03] rounded-xl p-3">{request.remarks}</p>
             </div>
           )}
+
+          {/* SLA Information */}
+          <div className="border-t border-gray-200 dark:border-gray-700/50 pt-4">
+            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+              <Clock size={15} className="text-primary-500" /> SLA Information
+            </h3>
+
+            {request.status === 'Completed' ? (
+              /* Turnaround result for completed requests */
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">SLA Turnaround</p>
+                  {request.sla_turnaround === 'Met' ? (
+                    <span className="inline-flex items-center gap-1 h-[24px] px-2.5 rounded-full text-[11px] font-semibold leading-none bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400">
+                      <CheckCircle2 size={11} /> SLA Met
+                    </span>
+                  ) : request.sla_turnaround === 'Missed' ? (
+                    <span className="inline-flex items-center gap-1 h-[24px] px-2.5 rounded-full text-[11px] font-semibold leading-none bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400">
+                      <XCircle size={11} /> SLA Missed
+                    </span>
+                  ) : (
+                    <span className="text-sm text-gray-400 dark:text-gray-500">N/A</span>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">SLA Due Date</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{request.sla_due_date || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    {request.sla_turnaround === 'Met' ? 'Completed Early By' : request.sla_turnaround === 'Missed' ? 'Completed Late By' : 'Result'}
+                  </p>
+                  <p className={`text-sm font-semibold ${
+                    request.sla_turnaround === 'Met' ? 'text-green-600 dark:text-green-400' :
+                    request.sla_turnaround === 'Missed' ? 'text-red-600 dark:text-red-400' :
+                    'text-gray-400 dark:text-gray-500'
+                  }`}>
+                    {request.sla_turnaround
+                      ? (request.sla_turnaround_days === 0
+                        ? 'On the due date'
+                        : `${request.sla_turnaround_days} working day${request.sla_turnaround_days !== 1 ? 's' : ''}`)
+                      : '—'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* Active request SLA panel */
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {/* SLA Status */}
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Status</p>
+                    <span className={`inline-flex items-center h-[24px] px-2.5 rounded-full text-[11px] font-semibold leading-none ${
+                      request.sla_status === 'Within SLA' ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400' :
+                      request.sla_status === 'Approaching SLA' ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400' :
+                      request.sla_status === 'Overdue' ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400' :
+                      request.sla_status === 'Paused' ? 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400' :
+                      'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                    }`}>{request.sla_status || 'Within SLA'}</span>
+                  </div>
+
+                  {/* SLA Due Date */}
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Due Date</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{request.sla_due_date || '—'}</p>
+                  </div>
+
+                  {/* Days Remaining or Overdue */}
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      {request.sla_overdue_days !== null && request.sla_overdue_days !== undefined ? 'Days Overdue' : 'Working Days Left'}
+                    </p>
+                    <p className={`text-sm font-semibold ${
+                      request.sla_overdue_days !== null && request.sla_overdue_days !== undefined
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-gray-800 dark:text-gray-200'
+                    }`}>
+                      {request.sla_overdue_days !== null && request.sla_overdue_days !== undefined
+                        ? `${request.sla_overdue_days} days overdue`
+                        : request.sla_days_remaining !== null && request.sla_days_remaining !== undefined
+                          ? `${request.sla_days_remaining} days`
+                          : '—'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Paused details (conditional) */}
+                {request.sla_paused_at && (
+                  <div className="mt-3 p-3 bg-amber-50/50 dark:bg-amber-500/5 rounded-xl border border-amber-100 dark:border-amber-800/30">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Paused Since</p>
+                        <p className="text-sm text-gray-800 dark:text-gray-200">{formatRelativeTime(request.sla_paused_at)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Total Paused Days</p>
+                        <p className="text-sm text-gray-800 dark:text-gray-200">{request.sla_paused_days || 0} working days</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Current Pause Duration</p>
+                        <p className="text-sm text-gray-800 dark:text-gray-200">
+                          {slaUtils.workingDaysBetween(new Date(request.sla_paused_at), new Date())} working days
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
           {/* Edit Form */}
           {editing && (
