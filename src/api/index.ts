@@ -1263,17 +1263,22 @@ export const api = {
         msByProject.set(m.project_id, arr);
       });
 
-      // Enrich requests with dynamic SLA status
+      // Enrich requests with dynamic SLA status (always recompute from current urgency)
       const now = new Date();
       const requests = (allRequests || []).map((r: any) => {
-        const slaStatus = r.sla_due_date
-          ? calculateSlaStatus(r.sla_due_date, r.status, r.sla_paused_at || null)
+        // Always dynamically compute sla_due_date from current urgency
+        const effectiveDueDate = r.created_at
+          ? calculateSlaDueDate(r.created_at, r.urgency || 'Normal', r.sla_paused_days || 0)
+          : r.sla_due_date || null;
+        const slaStatus = effectiveDueDate
+          ? calculateSlaStatus(effectiveDueDate, r.status, r.sla_paused_at || null)
           : 'Within SLA';
         const created = new Date(r.created_at);
         const daysUnassigned = r.assigned_to ? 0 : Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
         return {
           ...r,
           assigned_name: r.users?.name || null,
+          sla_due_date: effectiveDueDate,
           sla_status: slaStatus,
           days_unassigned: daysUnassigned,
           users: undefined,

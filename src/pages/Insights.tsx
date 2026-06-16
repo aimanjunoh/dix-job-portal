@@ -61,6 +61,7 @@ export default function Insights() {
   const requestByDepartment = useMemo(() => groupByField(requests, 'department'), [requests]);
   const requestByStaff = useMemo(() => groupByAssignedStaff(requests), [requests]);
   const requestStatusDist = useMemo(() => groupByField(requests, 'status'), [requests]);
+  const requestByUrgency = useMemo(() => groupByField(requests, 'urgency'), [requests]);
 
   // --- Section 2: SLA Insights ---
   const slaStats = useMemo(() => computeSlaStats(requests), [requests]);
@@ -121,45 +122,46 @@ export default function Insights() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-primary-50 dark:bg-primary-500/15 rounded-xl flex items-center justify-center">
-              <BarChart3 size={20} className="text-primary-600 dark:text-primary-400" />
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2.5">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-primary-50 dark:bg-primary-500/15 rounded-xl flex items-center justify-center">
+              <BarChart3 size={18} className="sm:hidden text-primary-600 dark:text-primary-400" />
+              <BarChart3 size={20} className="hidden sm:block text-primary-600 dark:text-primary-400" />
             </div>
             Insights
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm ml-[46px]">Analytics, trends and management reporting</p>
+          <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm ml-[38px] sm:ml-[46px]">Analytics, trends and management reporting</p>
         </div>
 
         {/* Export buttons (hidden for guests) */}
         {!isGuest && (
-          <div className="flex gap-2 print:hidden overflow-x-auto">
+          <div className="flex gap-1.5 sm:gap-2 print:hidden overflow-x-auto scrollbar-hide">
             <button onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors whitespace-nowrap min-h-[40px]">
-              <Download size={14} /> CSV
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors whitespace-nowrap">
+              <Download size={13} /> CSV
             </button>
             <button onClick={handleExportExcel}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors whitespace-nowrap min-h-[40px]">
-              <FileSpreadsheet size={14} /> Excel
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors whitespace-nowrap">
+              <FileSpreadsheet size={13} /> Excel
             </button>
             <button onClick={handleExportPDF}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors whitespace-nowrap min-h-[40px]">
-              <FileText size={14} /> PDF
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors whitespace-nowrap">
+              <FileText size={13} /> PDF
             </button>
           </div>
         )}
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-gray-100 dark:bg-gray-800/50 p-1.5 flex gap-1 overflow-x-auto rounded-xl print:hidden">
+      <div className="bg-gray-100 dark:bg-gray-800/50 p-1 sm:p-1.5 flex gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide rounded-lg sm:rounded-xl print:hidden">
         {TABS.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+            className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-md sm:rounded-lg text-[13px] sm:text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === tab.key
                 ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -180,6 +182,7 @@ export default function Insights() {
             byDepartment={requestByDepartment}
             byStaff={requestByStaff}
             statusDistribution={requestStatusDist}
+            byUrgency={requestByUrgency}
           />
         )}
         {activeTab === 'sla' && (

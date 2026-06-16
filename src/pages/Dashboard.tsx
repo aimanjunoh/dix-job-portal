@@ -44,15 +44,16 @@ function KpiCardCell({ card, onClick }: { card: KpiCard; onClick: () => void }) 
   return (
     <div
       onClick={onClick}
-      className={`group glass-card p-4 cursor-pointer transition-all duration-150 ${showRing ? 'ring-1 ring-orange-200/70 dark:ring-orange-800/30' : ''}`}
+      className={`group glass-card px-3 py-2.5 sm:p-4 cursor-pointer transition-all duration-150 ${showRing ? 'ring-1 ring-orange-200/70 dark:ring-orange-800/30' : ''}`}
     >
-      <div className={`flex items-center gap-2 mb-2 ${iconOpacity}`}>
-        <div className={`w-7 h-7 ${card.accent} rounded-lg flex items-center justify-center flex-shrink-0`}>
-          <card.icon size={14} />
+      <div className={`flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2 ${iconOpacity}`}>
+        <div className={`w-6 h-6 sm:w-7 sm:h-7 ${card.accent} rounded-lg flex items-center justify-center flex-shrink-0`}>
+          <card.icon size={13} className="sm:hidden" />
+          <card.icon size={14} className="hidden sm:block" />
         </div>
-        <p className="text-[12px] font-medium text-gray-500 dark:text-gray-400 leading-none">{card.label}</p>
+        <p className="text-[11px] sm:text-[12px] font-medium text-gray-500 dark:text-gray-400 leading-none">{card.label}</p>
       </div>
-      <p className={`text-[26px] font-bold leading-none tracking-tight ${numberColor}`}>{card.value}</p>
+      <p className={`text-[22px] sm:text-[26px] font-bold leading-none tracking-tight ${numberColor}`}>{card.value}</p>
     </div>
   );
 }
@@ -128,6 +129,12 @@ export default function Dashboard() {
   );
 
   const roleLabel = profile?.role === 'admin' ? 'Administrator' : profile?.role === 'guest' ? 'Guest' : 'Staff';
+  const displayName = profile?.name ? profile.name.split(' ')[0] : 'User';
+  const roleBadgeClass = profile?.role === 'admin'
+    ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-500/20'
+    : profile?.role === 'guest'
+      ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200/60 dark:border-gray-700/40'
+      : 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-500/20';
 
   // Secondary info cards — calm, informational
   const secondaryCards: KpiCard[] = [
@@ -165,18 +172,18 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
-            Welcome back, {profile?.name || 'User'}
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
+            Welcome back, {displayName}
           </h1>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 flex-wrap">
             {profile?.department && (
               <p className="text-gray-500 dark:text-gray-400 text-xs">{profile.department}</p>
             )}
-            <span className="inline-flex items-center justify-center h-[22px] text-[11px] font-semibold px-2.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+            <span className={`inline-flex items-center justify-center h-[22px] text-[11px] font-semibold px-2.5 rounded-full ${roleBadgeClass}`}>
               {roleLabel}
             </span>
           </div>
@@ -194,7 +201,7 @@ export default function Dashboard() {
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
         {secondaryCards.map((card) => (
           <KpiCardCell key={card.label} card={card} onClick={() => navigate(`/requests?${card.filter}`)} />
         ))}
@@ -202,7 +209,7 @@ export default function Dashboard() {
 
       {/* SLA Overview */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2 sm:mb-3">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Shield size={15} className="text-primary-500" /> SLA Overview
           </h2>
@@ -210,7 +217,7 @@ export default function Dashboard() {
             {slaStats.compliance}% compliance
           </span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
           {slaCards.map((card) => (
             <KpiCardCell key={card.label} card={card} onClick={() => navigate(`/requests?${card.filter}`)} />
           ))}
@@ -218,7 +225,7 @@ export default function Dashboard() {
       </div>
 
       {/* Action Required */}
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
         {actionCards.map((card) => (
           <KpiCardCell key={card.label} card={card} onClick={() => navigate(`/requests?${card.filter}`)} />
         ))}
@@ -227,13 +234,13 @@ export default function Dashboard() {
       {/* My Workload */}
       {!isGuest && myStats.assigned >= 0 && (
         <div>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <Briefcase size={15} className="text-primary-500" /> My Workload
             </h2>
             <button onClick={() => navigate('/requests?mine=true')} className="text-[11px] text-primary-600 hover:text-primary-700 font-medium transition-colors duration-150">View All →</button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5">
             {workloadCards.map((card) => (
               <KpiCardCell key={card.label} card={card} onClick={() => navigate(`/requests?${card.filter}`)} />
             ))}
@@ -249,12 +256,12 @@ export default function Dashboard() {
             <span className="inline-flex items-center justify-center h-[22px] px-2 rounded-full text-[11px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">{myRequests.length}</span>
           </div>
           {myRequests.length === 0 ? (
-            <div className="flex items-center gap-3 py-5 px-3">
-              <div className="w-9 h-9 rounded-full bg-gray-50 dark:bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-                <Inbox className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+            <div className="flex items-center gap-2.5 py-3 px-3">
+              <div className="w-7 h-7 rounded-full bg-gray-50 dark:bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                <Inbox className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">No active requests assigned to you</p>
+                <p className="text-[13px] text-gray-500 dark:text-gray-400 font-medium">No active requests assigned to you</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">You're clear for now.</p>
               </div>
             </div>
@@ -304,12 +311,12 @@ export default function Dashboard() {
             <span className="inline-flex items-center justify-center h-[22px] px-2 rounded-full text-[11px] font-semibold status-unassigned">{unassignedRequests.length}</span>
           </div>
           {unassignedRequests.length === 0 ? (
-            <div className="flex items-center gap-3 py-5 px-3">
-              <div className="w-9 h-9 rounded-full bg-gray-50 dark:bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-                <Inbox className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+            <div className="flex items-center gap-2.5 py-3 px-3">
+              <div className="w-7 h-7 rounded-full bg-gray-50 dark:bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                <Inbox className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">No unassigned requests</p>
+                <p className="text-[13px] text-gray-500 dark:text-gray-400 font-medium">No unassigned requests</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">All incoming requests have been reviewed.</p>
               </div>
             </div>
@@ -381,11 +388,11 @@ export default function Dashboard() {
             <button onClick={() => navigate('/requests')} className="text-[11px] text-primary-600 hover:text-primary-700 font-medium transition-colors duration-150">View All →</button>
           </div>
           {recentRequests.length === 0 ? (
-            <div className="flex items-center gap-3 py-5 px-3">
-              <div className="w-9 h-9 rounded-full bg-gray-50 dark:bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-                <Inbox className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+            <div className="flex items-center gap-2.5 py-3 px-3">
+              <div className="w-7 h-7 rounded-full bg-gray-50 dark:bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                <Inbox className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">No recent activity</p>
+              <p className="text-[13px] text-gray-500 dark:text-gray-400 font-medium">No recent activity</p>
             </div>
           ) : (
             <div className="max-h-80 overflow-y-auto">
@@ -427,7 +434,7 @@ export default function Dashboard() {
             View Projects <ArrowRight size={12} />
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
           {projectCards.map((card) => (
             <KpiCardCell key={card.label} card={card} onClick={() => navigate(`/projects?${card.filter}`)} />
           ))}

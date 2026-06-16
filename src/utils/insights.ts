@@ -12,8 +12,9 @@ function isWeekend(d: Date): boolean {
 
 function workingDaysBetween(start: Date, end: Date): number {
   let count = 0;
-  const current = new Date(start);
-  while (current < end) {
+  const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const target = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  while (current < target) {
     current.setDate(current.getDate() + 1);
     if (!isWeekend(current)) count++;
   }
