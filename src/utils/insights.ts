@@ -29,7 +29,7 @@ function getMonth(dateStr: string): string {
 function getMonthLabel(monthStr: string): string {
   const [y, m] = monthStr.split('-');
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${months[parseInt(m) - 1]} ${y.slice(2)}`;
+  return `${months[parseInt(m) - 1]} ${y}`;
 }
 
 // --- Section 1: Request Insights ---
