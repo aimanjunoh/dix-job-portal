@@ -207,22 +207,31 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* SLA Overview */}
-      <div>
-        <div className="flex items-center justify-between mb-2 sm:mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Shield size={15} className="text-primary-500" /> SLA Overview
-          </h2>
-          <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
-            {slaStats.compliance}% compliance
-          </span>
+      {/* SLA Overview — event-driven visibility */}
+      {(slaStats.approachingSLA > 0 || slaStats.overdueSLA > 0 || slaStats.paused > 0) ? (
+        <div>
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Shield size={15} className="text-primary-500" /> SLA Overview
+            </h2>
+            <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+              {slaStats.compliance}% compliance
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
+            {slaCards.map((card) => (
+              <KpiCardCell key={card.label} card={card} onClick={() => navigate(`/requests?${card.filter}`)} />
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
-          {slaCards.map((card) => (
-            <KpiCardCell key={card.label} card={card} onClick={() => navigate(`/requests?${card.filter}`)} />
-          ))}
+      ) : (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-500/[0.06] border border-emerald-200/40 dark:border-emerald-500/10">
+          <Shield size={14} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+          <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+            SLA Overview — {slaStats.compliance}% compliance, no issues
+          </p>
         </div>
-      </div>
+      )}
 
       {/* Action Required */}
       <div className="grid grid-cols-3 gap-2 sm:gap-2.5">

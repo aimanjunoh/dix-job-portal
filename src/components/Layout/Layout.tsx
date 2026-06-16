@@ -32,6 +32,13 @@ export default function Layout() {
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <Outlet />
         </main>
+
+        {/* Footer */}
+        <footer className="px-4 lg:px-6 py-3 text-center border-t border-gray-100 dark:border-gray-800/40">
+          <p className="text-[11px] text-gray-400 dark:text-gray-600">
+            &copy; {new Date().getFullYear()} Digital Innovation &amp; Experience Unit. Developed by Group Digital Services. All Rights Reserved.
+          </p>
+        </footer>
       </div>
     </div>
   );
