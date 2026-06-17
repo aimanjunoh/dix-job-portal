@@ -1241,12 +1241,14 @@ export const api = {
         { data: allUsers },
         { data: allTasks },
         { data: allMilestones },
+        { data: allProjectMembers },
       ] = await Promise.all([
         supabase.from('requests').select('*, users!assigned_to(name)').order('created_at'),
         supabase.from('projects').select('*, users!owner_id(name)'),
         supabase.from('users').select('id, name, email, role, department').eq('status', 'active').neq('role', 'guest'),
         supabase.from('project_tasks').select('project_id, status, assigned_to'),
         supabase.from('project_milestones').select('project_id, completed, weight'),
+        supabase.from('project_members').select('project_id, user_id'),
       ]);
 
       // Group tasks/milestones by project_id
@@ -1294,7 +1296,7 @@ export const api = {
         return { ...p, owner_name: p.users?.name || null, progress, health, users: undefined };
       });
 
-      return { requests, projects, users: allUsers || [] };
+      return { requests, projects, users: allUsers || [], projectMembers: allProjectMembers || [] };
     },
   },
 };

@@ -35,6 +35,7 @@ export default function Insights() {
   const [requests, setRequests] = useState<EnrichedRequest[]>([]);
   const [projects, setProjects] = useState<EnrichedProject[]>([]);
   const [users, setUsers] = useState<UserRecord[]>([]);
+  const [projectMembers, setProjectMembers] = useState<{ project_id: number; user_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function Insights() {
       setRequests(data.requests);
       setProjects(data.projects);
       setUsers(data.users);
+      setProjectMembers(data.projectMembers || []);
     } catch (err) {
       console.error('Failed to load insights:', err);
     } finally {
@@ -75,7 +77,7 @@ export default function Insights() {
   const projectDurationAnalysis = useMemo(() => computeProjectDurationAnalysis(projects), [projects]);
 
   // --- Section 4: Team Workload ---
-  const teamWorkload = useMemo(() => computeTeamWorkload(requests, projects, users), [requests, projects, users]);
+  const teamWorkload = useMemo(() => computeTeamWorkload(requests, projects, users, projectMembers), [requests, projects, users, projectMembers]);
 
   // --- Section 5: Management Summary ---
   const managementSummary = useMemo(() => computeManagementSummary(requests, projects, users), [requests, projects, users]);

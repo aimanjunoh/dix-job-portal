@@ -147,7 +147,7 @@ export default function TeamWorkload({ team }: Props) {
                       <td className="py-2 px-2 sm:px-3 font-medium text-gray-700 dark:text-gray-300 text-xs sm:text-sm">{t.name}</td>
                       <td className="py-2 px-2 sm:px-3 text-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm">{t.assigned}</td>
                       <td className="py-2 px-2 sm:px-3 text-center text-emerald-600 dark:text-emerald-400 font-semibold text-xs sm:text-sm">{t.completed}</td>
-                      <td className="py-2 px-2 sm:px-3 text-center text-indigo-600 dark:text-indigo-400 font-semibold text-xs sm:text-sm">{t.activeProjects}</td>
+                      <td className="py-2 px-2 sm:px-3 text-center text-indigo-600 dark:text-indigo-400 font-semibold text-xs sm:text-sm">{t.projects}</td>
                       <td className="py-2 px-2 sm:px-3 text-center">
                         <span className={`text-xs sm:text-sm ${t.overdue > 0 ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-300 dark:text-gray-600'}`}>{t.overdue}</span>
                       </td>

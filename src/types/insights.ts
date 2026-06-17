@@ -90,12 +90,17 @@ export interface ProjectStats {
   avgDurationDays: number;
 }
 
+export interface ProjectMember {
+  project_id: number;
+  user_id: string;
+}
+
 export interface StaffWorkload {
   userId: string;
   name: string;
   assigned: number;
   completed: number;
-  activeProjects: number;
+  projects: number;
   overdue: number;
   workloadScore: number;
   slaCompliancePercent: number;

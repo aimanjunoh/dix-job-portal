@@ -198,20 +198,36 @@ export function computeProjectDurationAnalysis(projects: EnrichedProject[]): Cat
 export function computeTeamWorkload(
   requests: EnrichedRequest[],
   projects: EnrichedProject[],
-  users: UserRecord[]
+  users: UserRecord[],
+  projectMembers: { project_id: number; user_id: string }[] = []
 ): StaffWorkload[] {
+  // Build a set of project IDs per user (owner OR member)
+  const userProjectIds = new Map<string, Set<number>>();
+  // Add owners
+  projects.forEach(p => {
+    if (p.owner_id) {
+      if (!userProjectIds.has(p.owner_id)) userProjectIds.set(p.owner_id, new Set());
+      userProjectIds.get(p.owner_id)!.add(p.id);
+    }
+  });
+  // Add team members
+  projectMembers.forEach(m => {
+    if (!userProjectIds.has(m.user_id)) userProjectIds.set(m.user_id, new Set());
+    userProjectIds.get(m.user_id)!.add(m.project_id);
+  });
+
   return users.map(u => {
     const assigned = requests.filter(r => r.assigned_to === u.id).length;
     const completed = requests.filter(r => r.assigned_to === u.id && r.status === 'Completed').length;
     const overdue = requests.filter(r => r.assigned_to === u.id && r.sla_status === 'Overdue').length;
-    const activeProjects = projects.filter(p => p.owner_id === u.id && p.status === 'Active').length;
+    const projects = (userProjectIds.get(u.id)?.size || 0);
     const activeRequests = requests.filter(r => r.assigned_to === u.id && r.status !== 'Completed');
     const overdueActive = activeRequests.filter(r => r.sla_status === 'Overdue').length;
     const slaCompliancePercent = activeRequests.length > 0
       ? Math.round(((activeRequests.length - overdueActive) / activeRequests.length) * 100) : 100;
-    const workloadScore = assigned + (activeProjects * 2);
+    const workloadScore = assigned + (projects * 2);
 
-    return { userId: u.id, name: u.name, assigned, completed, activeProjects, overdue, workloadScore, slaCompliancePercent };
+    return { userId: u.id, name: u.name, assigned, completed, projects, overdue, workloadScore, slaCompliancePercent };
   }).sort((a, b) => b.workloadScore - a.workloadScore);
 }
 

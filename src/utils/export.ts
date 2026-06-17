@@ -86,7 +86,7 @@ export function prepTeamForExport(team: any[]): Record<string, any>[] {
     'Assigned': t.assigned,
     'Completed': t.completed,
     'Overdue': t.overdue,
-    'Active Projects': t.activeProjects,
+    'Projects': t.projects,
     'SLA Compliance': `${t.slaCompliancePercent}%`,
     'Workload Score': t.workloadScore,
   }));
